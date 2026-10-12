@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.env
+.venv
+venv/
+env/
+ENV/
+
+# Testes e cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Linting
+.ruff_cache/
+.mypy_cache/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Outputs de vídeo (não versionados)
+outputs/videos/*
+outputs/thumbnails/*
+outputs/temp/*
+!outputs/videos/.gitkeep
+!outputs/thumbnails/.gitkeep
+!outputs/temp/.gitkeep
+
+# Modelos de IA (muito grandes para Git)
+models/
+*.safetensors
+*.ckpt
+*.pt
+*.bin
+*.gguf
+
+# HuggingFace cache
+.cache/
+
+# Secrets
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# Logs
+logs/
+*.log
+
+# Banco de dados local
+*.db
+*.sqlite
+*.sqlite3
+
+# Node (se usado em frontend)
+node_modules/
