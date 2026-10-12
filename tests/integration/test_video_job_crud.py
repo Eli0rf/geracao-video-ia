@@ -7,7 +7,7 @@ Usa SQLite em memória. Testa create, get, list, update_status.
 import pytest
 from sqlmodel import Session, SQLModel, create_engine
 
-from src.models.video_job import JobStatus, VideoJob
+from src.models.video_job import JobStatus
 from src.models.video_job_crud import (
     create_video_job,
     get_video_job,
