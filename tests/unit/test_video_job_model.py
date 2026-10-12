@@ -5,7 +5,7 @@ Verifica criação, validação de campos, defaults e transições de status.
 Sem I/O real — usa SQLite em memória via fixture.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 import pytest
 from sqlmodel import Session, SQLModel, create_engine
