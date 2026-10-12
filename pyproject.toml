@@ -1,0 +1,114 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "geracao-video-ia"
+version = "0.1.0"
+description = "API REST para geração de vídeo por IA com modelos open-source"
+readme = "README.md"
+requires-python = ">=3.13"
+license = { text = "MIT" }
+
+dependencies = [
+    # API
+    "fastapi==0.115.5",
+    "uvicorn[standard]==0.32.1",
+    "python-multipart==0.0.18",
+
+    # Banco de dados
+    "sqlmodel==0.0.22",
+    "alembic==1.14.0",
+
+    # Configuração
+    "pydantic-settings==2.6.1",
+    "python-dotenv==1.0.1",
+
+    # HTTP client (para integração com HuggingFace)
+    "httpx==0.27.2",
+
+    # Utilitários
+    "structlog==24.4.0",
+    "python-ulid==3.0.0",
+]
+
+[project.optional-dependencies]
+ai = [
+    # Modelos de IA (instalar separadamente por serem pesados)
+    "torch==2.5.1",
+    "diffusers==0.31.0",
+    "transformers==4.46.3",
+    "accelerate==1.1.1",
+    "huggingface-hub==0.26.2",
+    "safetensors==0.4.5",
+    "imageio[ffmpeg]==2.36.1",
+]
+
+dev = [
+    # Testes
+    "pytest==8.3.3",
+    "pytest-asyncio==0.24.0",
+    "pytest-cov==6.0.0",
+    "httpx==0.27.2",           # cliente para testes de API
+    "anyio==4.7.0",
+
+    # Qualidade
+    "ruff==0.8.0",
+    "mypy==1.13.0",
+
+    # Tipos
+    "types-python-dotenv==1.0.0.20240706",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+# ─── Ruff (linter + formatter) ────────────────────────────────────────────────
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "S",   # bandit (security)
+    "B",   # bugbear
+    "A",   # flake8-builtins
+    "C4",  # flake8-comprehensions
+    "RUF", # ruff-specific
+]
+ignore = [
+    "S101",  # assert permitido em testes
+    "B008",  # Depends() do FastAPI
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]
+
+# ─── Mypy ─────────────────────────────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.13"
+strict = true
+ignore_missing_imports = true
+exclude = ["tests/", "alembic/"]
+
+# ─── Pytest ───────────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/**/__init__.py"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80

@@ -11,78 +11,106 @@
 
 | Campo | Valor |
 |---|---|
-| **Fase pipeline** | DEFINE |
-| **Próxima fase** | PLAN |
+| **Fase pipeline** | BUILD |
+| **Fase anterior** | PLAN ✅ |
+| **Próxima fase** | VERIFY |
 | **Última atualização** | 2026-10-12 |
-| **Branch ativa** | `main` |
+| **Branch ativa** | `develop` (após merge de docs/plan) |
 | **Versão** | 0.1.0-alpha |
 
 ---
 
-## O Que Foi Feito (Sessão 2026-10-12)
+## Próxima Task a Executar
 
-### ✅ Concluído
-- [x] Análise do repositório `addyosmani/agent-skills` (25 skills, pipeline DEFINE→SHIP)
-- [x] Definição de stack tecnológica completa
-- [x] Estrutura de diretórios criada
-- [x] `PROJECT.md` — contexto completo do projeto
-- [x] `AGENTS.md` — contexto para todas as IAs
-- [x] `CONTEXT.md` — este arquivo
-- [x] `CONSTRAINTS.md` — padrões de qualidade
-- [x] `docs/PIPELINE.md` — pipeline detalhado
-- [x] `docs/adr/ADR-001` até `ADR-005` — decisões arquiteturais
-- [x] `.gitignore` configurado
-- [x] `.github/workflows/ci.yml` — pipeline CI inicial
-- [x] Git configurado com branches `main` e `develop`
+**TASK-001 — Setup do ambiente Python**
 
-### 🔲 Próximos Passos (Fase PLAN)
-- [ ] Criar `PLAN.md` com épicos e tasks da v0.1
-- [ ] Abrir Issues no GitHub para cada épico
-- [ ] Definir critérios de aceitação para E01 e E02
-- [ ] Setup do ambiente Python (pyproject.toml, venv)
-- [ ] Scaffold inicial da API FastAPI
+```bash
+git checkout develop
+git checkout -b feature/task-001-python-setup
+```
+
+Ver `PLAN.md` para critérios de aceitação completos.
 
 ---
 
-## Arquivos-Chave e Propósito
+## O Que Foi Feito
+
+### Sessão 2026-10-12 — Fase DEFINE ✅
+- [x] Análise do repositório `addyosmani/agent-skills`
+- [x] Definição de stack tecnológica completa
+- [x] Estrutura de diretórios criada
+- [x] `PROJECT.md`, `AGENTS.md`, `CONTEXT.md`, `CONSTRAINTS.md`
+- [x] `docs/PIPELINE.md` com pipeline DEFINE→SHIP
+- [x] 5 ADRs (decisões arquiteturais)
+- [x] `.github/workflows/ci.yml`
+- [x] `.gitignore`
+- [x] Commit inicial em `main` + branch `develop`
+
+### Sessão 2026-10-12 — Fase PLAN ✅
+- [x] Branch `docs/plan` criada
+- [x] `PLAN.md` com 15 tasks, 4 milestones, critérios de aceitação detalhados
+- [x] `pyproject.toml` com todas as dependências pinadas
+- [x] `.env.example` com todas as variáveis documentadas
+- [x] `Makefile` com comandos: install, run, test, lint, typecheck, ci, clean
+- [x] `AGENTS.md` e `CONTEXT.md` atualizados para fase BUILD
+- [x] Merge de `docs/plan` → `develop`
+
+---
+
+## Estado das Tasks
+
+| Task | Status |
+|---|---|
+| TASK-001 Setup Python + pyproject.toml | ◻ Pendente |
+| TASK-002 Scaffold FastAPI | ◻ Pendente |
+| TASK-003 Modelos SQLite/SQLModel | ◻ Pendente |
+| TASK-004 CI/CD GitHub Actions | ◻ Pendente |
+| TASK-005 POST /jobs | ◻ Pendente |
+| TASK-006 GET /jobs/{id} | ◻ Pendente |
+| TASK-007 GET /jobs (lista) | ◻ Pendente |
+| TASK-008 GET /jobs/{id}/download | ◻ Pendente |
+| TASK-009 Interface VideoGenerator | ◻ Pendente |
+| TASK-010 Worker assíncrono | ◻ Pendente |
+| TASK-011 AnimateDiff (fallback) | ◻ Pendente |
+| TASK-012 Wan2.1 (primário) | ◻ Pendente |
+| TASK-013 Testes E2E | ◻ Pendente |
+| TASK-014 Logging + Métricas | ◻ Pendente |
+| TASK-015 Docker | ◻ Pendente |
+
+---
+
+## Arquivos-Chave
 
 | Arquivo | Propósito |
 |---|---|
 | `PROJECT.md` | Visão geral, stack, épicos, princípios |
 | `AGENTS.md` | Regras e contexto para IAs |
 | `CONTEXT.md` | Estado atual da sessão (este arquivo) |
+| `PLAN.md` | Todas as tasks com critérios de aceitação |
 | `CONSTRAINTS.md` | Padrões de qualidade obrigatórios |
 | `docs/PIPELINE.md` | Pipeline DEFINE→SHIP detalhado |
-| `docs/adr/` | Architecture Decision Records |
-| `src/` | Código-fonte |
-| `tests/` | Testes automatizados |
-| `.kiro/skills/` | Skills customizadas |
+| `pyproject.toml` | Dependências Python pinadas |
+| `.env.example` | Template de variáveis de ambiente |
+| `Makefile` | Comandos de conveniência |
 
 ---
 
-## Decisões Tomadas Nesta Sessão
+## Decisões da Fase PLAN
 
-### Stack Python
-- Python 3.13 (já instalado na máquina)
-- FastAPI por performance async e documentação automática
-- SQLite para simplicidade inicial (migração fácil para PostgreSQL depois)
-- SQLModel por combinar Pydantic + SQLAlchemy
+### Dependências pinadas (principais)
+- `fastapi==0.115.5`
+- `sqlmodel==0.0.22`
+- `alembic==1.14.0`
+- `pydantic-settings==2.6.1`
+- `structlog==24.4.0`
+- `pytest==8.3.3` + `pytest-asyncio==0.24.0`
+- `ruff==0.8.0` + `mypy==1.13.0`
 
-### Modelos de IA
-- **Wan2.1** como primário — melhor equilíbrio qualidade/VRAM (8GB)
-- **CogVideoX** como alternativo — funciona com 6GB VRAM
-- **HunyuanVideo** para alta qualidade — requer 14GB VRAM
-- **AnimateDiff** como fallback — funciona com 4GB VRAM
+### Modelos de IA separados em `[ai]` extra
+Torch, diffusers, transformers são pesados (~5GB). Instalados separadamente com `make install-ai`.
 
-### Anti-Alucinação
-- Duas IAs em cada ciclo: Kiro (implementa) + Gemini/GPT (revisa)
-- Testes automatizados como árbitro objetivo
-- Humano com voto de minerva
-
-### CI/CD
-- GitHub Actions free tier (2000 min/mês — suficiente para o projeto)
-- Testes obrigatórios antes de merge
-- Nenhum deploy automático em produção (aprovação manual)
+### Ordem de implementação decidida
+TASK-001 → TASK-002 → TASK-003 → TASK-004 (paralelo possível após 001) → TASK-005~008 → TASK-009~012
 
 ---
 
@@ -98,11 +126,11 @@
 
 ## Como Retomar em Uma Nova Sessão
 
-1. Leia este arquivo (`CONTEXT.md`) primeiro
+1. Leia este arquivo (`CONTEXT.md`)
 2. Leia `AGENTS.md` para as regras
-3. Verifique o branch ativo: `git branch`
-4. Verifique o status: `git status`
-5. Continue pelos "Próximos Passos" acima
+3. Verifique a branch ativa: `git branch`
+4. Veja a **próxima task** na seção acima
+5. Leia os critérios de aceitação em `PLAN.md`
 
 ---
 
@@ -111,3 +139,4 @@
 | Data | Fase | O que foi feito |
 |---|---|---|
 | 2026-10-12 | DEFINE | Setup inicial, estrutura, documentação base |
+| 2026-10-12 | PLAN | PLAN.md, pyproject.toml, .env.example, Makefile |

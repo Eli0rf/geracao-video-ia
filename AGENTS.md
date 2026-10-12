@@ -2,7 +2,7 @@
 
 > Este arquivo é lido automaticamente por: Kiro, Claude Code, Codex, Gemini CLI, Cursor, Copilot e outros agentes de IA compatíveis com a convenção AGENTS.md.
 >
-> **Última atualização:** 2026-10-12 | **Fase atual:** DEFINE
+> **Última atualização:** 2026-10-12 | **Fase atual:** PLAN
 
 ---
 
@@ -11,8 +11,8 @@
 Sistema de geração de vídeo por IA com API REST em Python. Objetivo: receber prompts de texto/imagem e retornar vídeos gerados por modelos open-source (Wan2.1, CogVideoX, HunyuanVideo).
 
 **Repositório:** `~/geracao-video-ia`  
-**Fase pipeline:** `DEFINE → [PLAN] → BUILD → VERIFY → REVIEW → SHIP`  
-**Fase atual:** DEFINE (definição de arquitetura e documentação)
+**Fase pipeline:** `DEFINE ✅ → PLAN ✅ → [BUILD] → VERIFY → REVIEW → SHIP`  
+**Fase atual:** BUILD — próxima task: **TASK-001** (`feature/task-001-python-setup`)
 
 ---
 
@@ -115,8 +115,9 @@ Este projeto usa **dois agentes de IA** em cada ciclo de desenvolvimento:
 
 Ver `CONTEXT.md` para o estado detalhado de cada sessão.
 
-**Fase:** DEFINE  
-**Próximo passo:** Criar PLAN.md com épicos e tasks da v0.1
+**Fase:** BUILD (PLAN concluído)  
+**Próximo passo:** Iniciar TASK-001 em `feature/task-001-python-setup`  
+**Plano completo:** ver `PLAN.md`
 
 ---
 
