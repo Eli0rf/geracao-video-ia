@@ -3,7 +3,7 @@
   "role": "revisor",
   "description": "Agente revisor que usa a API Gemini para detectar alucinações, bugs e problemas de design no código gerado pelo construtor-agent.",
   "pipeline_phase": "VERIFY",
-  "model": "gemini-3.8-flash",
+  "model": "gemini-flash-latest",
   "api_key_env": "GEMINI_API_KEY",
   "invocation": "scripts/validate.py",
   "review_axes": [
