@@ -69,3 +69,6 @@ logs/
 
 # Node (se usado em frontend)
 node_modules/
+
+# Banco de dados local gerado
+data/*.db
