@@ -56,8 +56,8 @@ dev = [
     "ruff==0.8.0",
     "mypy==1.13.0",
 
-    # Tipos
-    "types-python-dotenv==1.0.0.20240706",
+    # Tipos (python-dotenv já inclui stubs embutidos desde 1.0)
+    "types-requests==2.32.0.20241016",
 ]
 
 [tool.hatch.build.targets.wheel]

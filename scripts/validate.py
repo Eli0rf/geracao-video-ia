@@ -112,7 +112,7 @@ def call_gemini(prompt: str, api_key: str) -> dict:
         print("❌ urllib não disponível.", file=sys.stderr)
         sys.exit(2)
 
-    models = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
+    models = ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-3.6-flash", "gemini-3.5-flash"]
 
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
