@@ -464,45 +464,43 @@ Testes que cobrem o fluxo completo: submeter job → checar status → baixar v�
 
 ---
 
-## Resumo de Tasks
+## Resumo de Tasks (Revisado — Abordagem Híbrida)
 
-| Task | Descrição | Épico | Est. | Status |
+> **Revisão 2026-10-12:** Tasks agrupadas por bloco lógico para reduzir overhead
+> de sessão (menos branches, menos commits, menos chamadas ao validador Gemini).
+> Sessões divididas em: RED (testes) → GREEN+COMMIT → validar+merge.
+
+| Bloco | Tasks | Branch | Estimativa | Status |
 |---|---|---|---|---|
-| TASK-001 | Setup Python + pyproject.toml | E01 | 1h | ◻ Pendente |
-| TASK-002 | Scaffold FastAPI | E01 | 2h | ◻ Pendente |
-| TASK-003 | Modelos SQLite/SQLModel | E01 | 2h | ◻ Pendente |
-| TASK-004 | CI/CD GitHub Actions | E01 | 1h | ◻ Pendente |
-| TASK-005 | POST /jobs | E02 | 2h | ◻ Pendente |
-| TASK-006 | GET /jobs/{id} | E02 | 1h | ◻ Pendente |
-| TASK-007 | GET /jobs (lista) | E02 | 1h | ◻ Pendente |
-| TASK-008 | GET /jobs/{id}/download | E02 | 1h | ◻ Pendente |
-| TASK-009 | Interface VideoGenerator | E03 | 1h | ◻ Pendente |
-| TASK-010 | Worker assíncrono | E03 | 3h | ◻ Pendente |
-| TASK-011 | AnimateDiff (fallback) | E03 | 4h | ◻ Pendente |
-| TASK-012 | Wan2.1 (primário) | E03 | 4h | ◻ Pendente |
-| TASK-013 | Testes E2E | E06 | 2h | ◻ Pendente |
-| TASK-014 | Logging + Métricas | E07 | 2h | ◻ Pendente |
-| TASK-015 | Docker | E08 | 2h | ◻ Pendente |
+| E01-setup | TASK-001~004 | concluído | — | ✅ |
+| E02-api-endpoints | TASK-005~008 | `feature/e02-api-endpoints` | 4h | ◻ Pendente |
+| E03-video-generator | TASK-009~012 | `feature/e03-video-generator` | 8h | ◻ Pendente |
+| E06-e2e-tests | TASK-013 | `feature/e06-e2e-tests` | 2h | ◻ Pendente |
+| E07-observability | TASK-014 | `feature/e07-observability` | 2h | ◻ Pendente |
+| E08-docker | TASK-015 | `feature/e08-docker` | 2h | ◻ Pendente |
 
-**Total estimado:** ~29 horas de desenvolvimento
+**Total restante estimado:** ~18h
+
+### Regras da abordagem híbrida
+- 1 branch por bloco lógico (não por task individual)
+- 1 validação Gemini por bloco (não por arquivo)
+- Sessões divididas: RED numa sessão → GREEN+commit noutra
+- Commits atômicos por lógica dentro do bloco
 
 ---
 
-## Ordem de Execução Recomendada
+## Ordem de Execução (Revisada)
 
 ```
-Sprint 1 (v0.1 Fundação):
-  TASK-001 → TASK-002 → TASK-003 → TASK-004
-              └──────────────────────────────→ TASK-005
-                                              → TASK-006
-                                              → TASK-007
-                                              → TASK-008
+Sprint 1 (v0.1 Fundação) ✅ CONCLUÍDO
+  E01-setup: TASK-001 → TASK-002 → TASK-003 → TASK-004
 
-Sprint 2 (v0.2 Core):
-  TASK-009 → TASK-010 → TASK-011 → TASK-012
+Sprint 2 (v0.2 Core API):
+  E02-api-endpoints  → todos os 4 endpoints juntos
+  E03-video-generator → interface + worker + AnimateDiff + Wan2.1
 
 Sprint 3 (v0.3 Qualidade + v1.0):
-  TASK-013 → TASK-014 → TASK-015
+  E06-e2e-tests → E07-observability → E08-docker
 ```
 
 ---
