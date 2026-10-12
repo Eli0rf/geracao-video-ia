@@ -39,8 +39,8 @@ outputs/temp/*
 !outputs/thumbnails/.gitkeep
 !outputs/temp/.gitkeep
 
-# Modelos de IA (muito grandes para Git)
-models/
+# Modelos de IA (muito grandes para Git — pasta na raiz do projeto)
+/models/
 *.safetensors
 *.ckpt
 *.pt
