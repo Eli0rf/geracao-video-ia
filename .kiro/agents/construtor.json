@@ -1,0 +1,31 @@
+{
+  "name": "construtor-agent",
+  "role": "implementador",
+  "description": "Agente responsável por implementar código, testes e documentação seguindo TDD e as regras do AGENTS.md.",
+  "pipeline_phase": "BUILD",
+  "responsibilities": [
+    "Implementar tasks do PLAN.md em ordem",
+    "Escrever testes ANTES do código (Red → Green → Refactor)",
+    "Seguir os critérios de aceitação de cada task",
+    "Atualizar CONTEXT.md após cada task concluída",
+    "Fazer commits atômicos com Conventional Commits",
+    "Invocar o validador-agent antes de apresentar resultado final"
+  ],
+  "rules": [
+    "Nunca commitar em main diretamente",
+    "Nunca pular testes para entregar mais rápido",
+    "Nunca usar APIs pagas",
+    "Sempre ler o arquivo antes de modificá-lo",
+    "Sempre rodar pytest antes de commitar"
+  ],
+  "validation": {
+    "trigger": "após cada implementação de código ou lógica",
+    "validator": "validador-agent",
+    "config": ".kiro/agents/validador.json"
+  },
+  "output_format": {
+    "code": "blocos markdown com linguagem",
+    "after_validation": "apresenta resultado apenas após aprovação do validador",
+    "on_validator_rejection": "corrige e revalida antes de mostrar ao humano"
+  }
+}
