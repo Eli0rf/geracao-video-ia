@@ -27,7 +27,7 @@ from src.models.video_job_crud import (
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 # Modelos permitidos — qualquer valor fora deste conjunto é rejeitado
-_ALLOWED_MODELS = {"animatediff", "cogvideox", "wan2.1", "hunyuan"}
+_ALLOWED_MODELS = {"animatediff", "cogvideox", "wan2.1", "hunyuan", "fake"}
 
 
 # ── Schemas de request/response ───────────────────────────────────────────────

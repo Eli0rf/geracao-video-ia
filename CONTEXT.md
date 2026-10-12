@@ -21,14 +21,15 @@
 
 ## Próxima Task a Executar
 
-**TASK-005 — Endpoint POST /api/v1/jobs**
+**TASK-016 — OllamaScriptGenerator (roteiro via LLM local)** — Bloco 2 (PR 2)
 
 ```bash
 git checkout develop
-git checkout -b feature/task-005-post-jobs
+git checkout -b feature/e04-roteiro-audio
 ```
 
-Ver `PLAN.md` seção TASK-005 para critérios de aceitação completos.
+Ver `PLAN.md` seção TASK-016/TASK-017 para critérios de aceitação completos.
+Base de contratos (`src/core/interfaces.py`, fakes, factory) já pronta.
 
 ---
 
@@ -40,17 +41,22 @@ Ver `PLAN.md` seção TASK-005 para critérios de aceitação completos.
 | TASK-002 Scaffold FastAPI | ✅ Concluída | f1d1b5e |
 | TASK-003 Modelos SQLite/SQLModel | ✅ Concluída | df59858 |
 | TASK-004 CI/CD GitHub Actions | ✅ Concluída | b2cddd9 |
-| TASK-005 POST /jobs | ◻ Pendente | — |
-| TASK-006 GET /jobs/{id} | ◻ Pendente | — |
-| TASK-007 GET /jobs (lista) | ◻ Pendente | — |
-| TASK-008 GET /jobs/{id}/download | ◻ Pendente | — |
-| TASK-009 Interface VideoGenerator | ◻ Pendente | — |
-| TASK-010 Worker assíncrono | ◻ Pendente | — |
+| TASK-005 POST /jobs | ✅ Concluída | a4e0d28 (E02) |
+| TASK-006 GET /jobs/{id} | ✅ Concluída | a4e0d28 (E02) |
+| TASK-007 GET /jobs (lista) | ✅ Concluída | a4e0d28 (E02) |
+| TASK-008 GET /jobs/{id}/download | ✅ Concluída | a4e0d28 (E02) |
+| TASK-009 Interface VideoGenerator | ✅ Concluída | PR-1 (Bloco 0&1) |
+| TASK-010 Worker assíncrono | ◻ Pendente | — (ver TASK-019/020) |
 | TASK-011 AnimateDiff (fallback) | ◻ Pendente | — |
 | TASK-012 Wan2.1 (primário) | ◻ Pendente | — |
 | TASK-013 Testes E2E | ◻ Pendente | — |
 | TASK-014 Logging + Métricas | ◻ Pendente | — |
 | TASK-015 Docker | ◻ Pendente | — |
+| TASK-016 OllamaScriptGenerator | ◻ Pendente | — (Bloco 2) |
+| TASK-017 PiperAudioSynthesizer | ◻ Pendente | — (Bloco 2) |
+| TASK-018 VideoAssembler (FFmpeg) | ◻ Pendente | — (Bloco 3) |
+| TASK-019 VideoPipeline | ◻ Pendente | — (Bloco 4) |
+| TASK-020 BackgroundDispatcher | ◻ Pendente | — (Bloco 4) |
 
 ---
 
@@ -76,6 +82,14 @@ Ver `PLAN.md` seção TASK-005 para critérios de aceitação completos.
 - **TASK-003:** `VideoJob` SQLModel + CRUD + Alembic migration `ea1fedd1683a`. 56 testes, 98.51% cobertura.
 - **TASK-004:** CI/CD GitHub Actions — 2 stages, concurrency, `--cov-append`, Gemini ✅
 
+### Sessão 2026-10-12 — BUILD v0.2 — Motor de geração (Bloco 0&1 / PR-1)
+- **Docs:** ADR-006 (Ollama+Piper locais), ADR-007 (FFmpeg subprocess), ADR-008 (BackgroundTasks). PLAN.md com TASK-016~020.
+- **Contratos `src/core/`:** `interfaces.py` (Protocols `VideoGenerator`/`ScriptGenerator`/`AudioSynthesizer` + tipos `Scene`/`Script`), `errors.py` (hierarquia `GenerationError`), `fakes.py` (implementações determinísticas, WAV real), `factory.py` (resolução + fallback automático para fake).
+- **Config:** `fake` adicionado aos modelos permitidos (`config.py`, `_ALLOWED_MODELS`).
+- **Testes:** +27 unit (`test_core_interfaces/fakes/factory.py`). 95 unit + 18 integration = 113 passando.
+- **Métricas:** `src/core/*` 100% cobertura; total 99%; ruff 0; mypy 0.
+- **Próximo:** Bloco 2 (PR-2) — `OllamaScriptGenerator` + `PiperAudioSynthesizer`.
+
 ---
 
 ## Estrutura de Código Atual
@@ -90,11 +104,15 @@ src/
 │   ├── logging_config.py  ← structlog JSON/dev
 │   └── v1/
 │       ├── router.py      ← Agrega /api/v1
-│       └── jobs.py        ← Placeholder POST /api/v1/jobs
+│       └── jobs.py        ← 4 endpoints REST de jobs (202/polling/download)
 ├── models/
 │   ├── video_job.py       ← VideoJob SQLModel (JobStatus enum)
 │   └── video_job_crud.py  ← create, get, list (func.count), update_status
-└── core/                  ← Reservado para lógica de negócio (TASK-009+)
+└── core/                  ← Motor de geração (Bloco 0&1 concluído)
+    ├── interfaces.py      ← Protocols: VideoGenerator/ScriptGenerator/AudioSynthesizer
+    ├── errors.py          ← GenerationError, ModelUnavailableError, GenerationTimeoutError, AssemblyError
+    ├── fakes.py           ← FakeVideoGenerator/ScriptGenerator/AudioSynthesizer
+    └── factory.py         ← get_generator/get_script_generator/get_audio_synthesizer + fallback
 
 tests/
 ├── unit/          ← 38 testes (config, health, errors, video_job model)
@@ -106,15 +124,14 @@ alembic/
 
 ---
 
-## Métricas de Qualidade (BUILD v0.1)
+## Métricas de Qualidade (BUILD v0.2 — PR-1)
 
 | Métrica | Valor |
 |---|---|
-| Testes totais | 56 passando |
-| Cobertura | 98.51% |
+| Testes totais | 113 passando (95 unit + 18 integration) |
+| Cobertura | 99% (`src/core/*` = 100%) |
 | ruff | ✅ 0 erros |
 | mypy | ✅ 0 erros |
-| Validações Gemini | 6 aprovadas (2 com melhorias aplicadas) |
 
 ---
 

@@ -21,7 +21,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 AppEnv = Literal["development", "production", "test"]
 LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-VideoModel = Literal["wan2.1", "cogvideox", "hunyuan", "animatediff"]
+VideoModel = Literal["wan2.1", "cogvideox", "hunyuan", "animatediff", "fake"]
 
 
 class Settings(BaseSettings):

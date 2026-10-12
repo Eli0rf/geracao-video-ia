@@ -419,6 +419,125 @@ Implementar `AnimateDiffGenerator` como primeiro modelo real. Escolhido como fal
 
 ---
 
+## v0.2 — Core: Motor de geração (`src/core/`)
+
+> **Nota de revisão (2026-10-12):** Novas tasks (016–020) acrescentadas para
+> cobrir o **motor de geração completo** em `src/core/`: roteiro/áudio
+> (ADR-006), montagem FFmpeg (ADR-007) e execução em background (ADR-008).
+> Esta milestone depende de TASK-009~012 (interface, worker, modelos de vídeo).
+
+### ÉPICO E04 — Roteiro e áudio (ADR-006)
+
+#### TASK-016 — OllamaScriptGenerator (roteiro via LLM local)
+
+**Estimativa:** 3h  
+**Branch:** `feature/task-016-ollama-script`  
+**Dependências:** TASK-009 (interface `ScriptGenerator`)
+
+**Descrição:**  
+Implementar `ScriptGenerator` concreto que chama Ollama local via `httpx`
+(`POST /api/generate`), valida a resposta JSON com Pydantic e produz um
+`Script` (lista de `Scene` com narração + prompt visual). `is_available()`
+faz health-check em `/api/tags`.
+
+**Critérios de aceitação:**
+- [ ] Implementa `ScriptGenerator` de `src/core/interfaces.py`
+- [ ] Timeout e retry configuráveis; falha → `GenerationError`
+- [ ] Fallback para `FakeScriptGenerator` quando Ollama indisponível
+- [ ] Testes unitários com `httpx.MockTransport` (sem rede real)
+
+---
+
+#### TASK-017 — PiperAudioSynthesizer (TTS local)
+
+**Estimativa:** 3h  
+**Branch:** `feature/task-017-piper-audio`  
+**Dependências:** TASK-009 (interface `AudioSynthesizer`)
+
+**Descrição:**  
+Implementar `AudioSynthesizer` concreto que invoca o binário `piper` via
+`subprocess` (lista de args, nunca shell) para sintetizar narração em `.wav`.
+`is_available()` verifica binário `piper` + arquivo de voz.
+
+**Critérios de aceitação:**
+- [ ] Implementa `AudioSynthesizer` de `src/core/interfaces.py`
+- [ ] `subprocess.run([...], shell=False)` (sem injeção de comando)
+- [ ] Timeout de subprocess configurável
+- [ ] `is_available()` False se binário/voz ausentes
+- [ ] Fallback para `FakeAudioSynthesizer`
+- [ ] Testes unitários com `subprocess` mockado (sem binário real)
+
+---
+
+### ÉPICO E05 — Montagem e orquestração (ADR-007, ADR-008)
+
+#### TASK-018 — VideoAssembler (montagem FFmpeg)
+
+**Estimativa:** 3h  
+**Branch:** `feature/task-018-ffmpeg-assembler`  
+**Dependências:** TASK-009, TASK-016, TASK-017
+
+**Descrição:**  
+Implementar a montagem do vídeo final em `src/core/assembly/ffmpeg.py`:
+concatena os clipes das cenas (concat demuxer), faz mux do áudio da
+narração e normaliza resolução/fps, tudo via `subprocess` + FFmpeg.
+
+**Critérios de aceitação:**
+- [ ] `VideoAssembler.assemble(clips, audio, out_path, width, height)`
+- [ ] Concat demuxer (`-f concat`) + mux de áudio (`-shortest`, `-c:a aac`)
+- [ ] Construção de comando como função pura testável
+- [ ] Erros → `AssemblyError`
+- [ ] Testes: construção de comando (puro) + execução real com `skipif`
+      quando FFmpeg ausente
+
+---
+
+#### TASK-019 — VideoPipeline (orquestrador de estágios)
+
+**Estimativa:** 3h  
+**Branch:** `feature/task-019-video-pipeline`  
+**Dependências:** TASK-009, TASK-016, TASK-017, TASK-018
+
+**Descrição:**  
+Criar `src/core/pipeline.py` (`VideoPipeline`) que orquestra o fluxo
+completo: roteiro → áudio por cena → clipes de vídeo por cena → montagem
+final em `outputs/videos/{job_id}.mp4`. Todas as dependências
+(`ScriptGenerator`, `AudioSynthesizer`, `VideoGenerator`, `VideoAssembler`)
+entram por injeção, permitindo testar com fakes.
+
+**Critérios de aceitação:**
+- [ ] `VideoPipeline.run(job) -> Path` (caminho do mp4 final)
+- [ ] Dependências injetadas (fakes nos testes de unidade)
+- [ ] Limpeza de arquivos temporários em caso de falha
+- [ ] Testes unitários com fakes (integração do pipeline, sem I/O real)
+
+---
+
+#### TASK-020 — BackgroundTasksDispatcher + integração no POST /jobs
+
+**Estimativa:** 3h  
+**Branch:** `feature/task-020-background-dispatcher`  
+**Dependências:** TASK-019
+
+**Descrição:**  
+Criar `src/core/dispatcher.py` (`JobDispatcher` Protocol +
+`BackgroundTasksDispatcher`) e `src/core/worker.py` (`JobProcessor`), e
+integrar o disparo no endpoint `POST /api/v1/jobs` via `BackgroundTasks`.
+O endpoint continua retornando 202; o processamento ocorre em background.
+`JobProcessor` aplica semáforo (`max_concurrent_jobs`), timeout
+(`job_timeout_seconds`) e atualiza status do job no banco.
+
+**Critérios de aceitação:**
+- [ ] `JobDispatcher` Protocol + `BackgroundTasksDispatcher`
+- [ ] `JobProcessor.process(job_id)` com `asyncio.Semaphore` + timeout
+- [ ] Transições: `pending → processing → completed/failed`
+- [ ] Idempotência (ignora job que não está `pending`)
+- [ ] Recuperação de jobs órfãos no `lifespan` da app
+- [ ] `POST /jobs` integrado; contrato HTTP (202) preservado
+- [ ] Testes de integração: job processa end-to-end com fakes
+
+---
+
 ## v0.3 — Qualidade
 
 ### ÉPICO E06 — Suite de testes completa
@@ -475,11 +594,13 @@ Testes que cobrem o fluxo completo: submeter job → checar status → baixar v�
 | E01-setup | TASK-001~004 | concluído | — | ✅ |
 | E02-api-endpoints | TASK-005~008 | `feature/e02-api-endpoints` | 4h | ◻ Pendente |
 | E03-video-generator | TASK-009~012 | `feature/e03-video-generator` | 8h | ◻ Pendente |
+| E04-roteiro-audio | TASK-016~017 | `feature/e04-roteiro-audio` | 6h | ◻ Pendente |
+| E05-core-engine | TASK-018~020 | `feature/e05-core-engine` | 9h | ◻ Pendente |
 | E06-e2e-tests | TASK-013 | `feature/e06-e2e-tests` | 2h | ◻ Pendente |
 | E07-observability | TASK-014 | `feature/e07-observability` | 2h | ◻ Pendente |
 | E08-docker | TASK-015 | `feature/e08-docker` | 2h | ◻ Pendente |
 
-**Total restante estimado:** ~18h
+**Total restante estimado:** ~33h
 
 ### Regras da abordagem híbrida
 - 1 branch por bloco lógico (não por task individual)
@@ -498,6 +619,8 @@ Sprint 1 (v0.1 Fundação) ✅ CONCLUÍDO
 Sprint 2 (v0.2 Core API):
   E02-api-endpoints  → todos os 4 endpoints juntos
   E03-video-generator → interface + worker + AnimateDiff + Wan2.1
+  E04-roteiro-audio  → OllamaScriptGenerator + PiperAudioSynthesizer
+  E05-core-engine    → VideoAssembler + VideoPipeline + BackgroundDispatcher
 
 Sprint 3 (v0.3 Qualidade + v1.0):
   E06-e2e-tests → E07-observability → E08-docker
