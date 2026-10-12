@@ -1,0 +1,26 @@
+{
+  "name": "validador-agent",
+  "role": "revisor",
+  "description": "Agente revisor que usa a API Gemini para detectar alucinações, bugs e problemas de design no código gerado pelo construtor-agent.",
+  "pipeline_phase": "VERIFY",
+  "model": "gemini-3.8-flash",
+  "api_key_env": "GEMINI_API_KEY",
+  "invocation": "scripts/validate.py",
+  "review_axes": [
+    "Corretude lógica — o código faz o que a spec diz?",
+    "Cobertura de edge cases — inputs inválidos, nulos, vazios tratados?",
+    "Segurança — inputs validados, sem exposição de dados sensíveis?",
+    "Retrocompatibilidade — quebra algo existente?",
+    "Qualidade — nomenclatura clara, sem complexidade desnecessária?"
+  ],
+  "output_format": {
+    "approved": "✅ VALIDADOR: aprovado — [resumo breve]",
+    "rejected": "⚠️ VALIDADOR: rejeita — [lista de problemas encontrados]",
+    "warning": "⚡ VALIDADOR: aprovado com ressalvas — [lista de pontos de atenção]"
+  },
+  "escalation": {
+    "on_rejection": "construtor-agent deve corrigir e reenviar para validação",
+    "max_cycles": 3,
+    "on_max_cycles": "escalar para humano com relatório completo"
+  }
+}
