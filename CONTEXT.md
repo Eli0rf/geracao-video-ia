@@ -60,7 +60,7 @@ FastAPI via `StaticFiles` em `/`.
 | TASK-018 VideoAssembler (FFmpeg) | ✅ Concluída | PR-3 (Bloco 3) |
 | TASK-019 VideoPipeline | ✅ Concluída | PR-4 (Bloco 4) |
 | TASK-020 BackgroundDispatcher | ✅ Concluída | PR-4 (Bloco 4) |
-| TASK-021 Frontend pixel art | ◻ Pendente | — (Bloco 5) |
+| TASK-021 Frontend pixel art | ✅ Concluída | PR-5 (Bloco 5) |
 
 ---
 
@@ -119,7 +119,12 @@ FastAPI via `StaticFiles` em `/`.
 - **Testes:** `test_pipeline`, `test_worker` (engine em arquivo p/ concorrência), `test_dispatcher`, `test_jobs_dispatch` (integração). 192 testes (174 unit + 18 integration).
 - **Métricas:** total 99% cobertura; ruff 0; mypy 0 (27 arquivos).
 - **Validação:** smoke de integração real confirmou wiring completo (factory → pipeline → worker → banco → GET). Sem FFmpeg local → jobs `failed` (esperado); caminho `completed` coberto por fakes.
-- **Próximo:** Bloco 5 (PR-5) — Frontend pixel art (TASK-021).
+### Sessão 2026-10-13 — BUILD v0.2 — Frontend pixel art (Bloco 5 / PR-5)
+- **`static/`** (TASK-021): `index.html` (fliperama 8-bits, fonte 'Press Start 2P' via Google Fonts), `style.css` (botões chunky 3D sólidos, fundo escuro + neon, scanlines CRT, GAME OVER tremendo), `app.js` (vanilla JS: `POST /api/v1/jobs` → tela de loading `[■■■□□□]` → polling 3s em `GET /api/v1/jobs/{id}` → estados pending/processing/failed/completed; `<video controls>` em completed).
+- **API:** `src/api/main.py` monta `static/` em `/` via `StaticFiles(html=True)` **após** `/health` (catch-all não sombreia `/api/v1/*`); `STATIC_DIR` absoluto (robusto a CWD); branch `else` com `pragma: no cover`.
+- **Testes:** `tests/integration/test_frontend.py` — `GET /` (200 + marcador pixel), `/style.css`, `/app.js`, regressão (`/health` + `/api/v1/jobs` intactos).
+- **Validação:** smoke serve o index e as rotas da API respondem junto ao mount. 195 testes passando (171 unit + 24 integration, 2 skip sem ffmpeg).
+- **Próximo:** Bloco 6 — TASK-013 E2E, milestones v0.3/v0.4.
 
 ---
 
@@ -163,12 +168,12 @@ alembic/
 
 ---
 
-## Métricas de Qualidade (BUILD v0.2 — PR-4)
+## Métricas de Qualidade (BUILD v0.2 — PR-5)
 
 | Métrica | Valor |
 |---|---|
-| Testes totais | 192 passando (174 unit + 18 integration, 2 skip sem ffmpeg) |
-| Cobertura | 99% (`src/core/*` e `src/api/*` ≈ 100%) |
+| Testes totais | 195 passando (171 unit + 24 integration, 2 skip sem ffmpeg) |
+| Cobertura | 99% (`src/core/*` 100%) |
 | ruff | ✅ 0 erros |
 | mypy | ✅ 0 erros |
 
