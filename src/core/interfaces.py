@@ -120,6 +120,35 @@ class AudioSynthesizer(Protocol):
 
 
 @runtime_checkable
+class Assembler(Protocol):
+    """
+    Montador do vídeo final: junta os clipes e mixa o áudio da narração.
+
+    Implementações: `VideoAssembler` (real, FFmpeg — ADR-007) e um fake nos
+    testes. Desacopla o `VideoPipeline` da ferramenta concreta de montagem.
+    """
+
+    def assemble(
+        self,
+        clips: list[Path],
+        audio: Path,
+        out_path: Path,
+        width: int,
+        height: int,
+    ) -> Path:
+        """
+        Concatena `clips`, normaliza para `width`x`height` e mixa `audio`.
+
+        Returns:
+            O caminho do MP4 final (`out_path`).
+
+        Raises:
+            GenerationError: Falha na montagem.
+        """
+        ...
+
+
+@runtime_checkable
 class VideoGenerator(Protocol):
     """
     Gerador de vídeo (text-to-video): transforma um prompt em um clipe MP4.
