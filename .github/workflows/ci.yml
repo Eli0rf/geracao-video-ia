@@ -73,6 +73,12 @@ jobs:
             --cov=src \
             --cov-report=xml
 
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version
+
       - name: Run integration tests
         run: |
           pytest tests/integration/ -v \
