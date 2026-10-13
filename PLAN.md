@@ -506,10 +506,10 @@ final em `outputs/videos/{job_id}.mp4`. Todas as dependências
 entram por injeção, permitindo testar com fakes.
 
 **Critérios de aceitação:**
-- [ ] `VideoPipeline.run(job) -> Path` (caminho do mp4 final)
-- [ ] Dependências injetadas (fakes nos testes de unidade)
-- [ ] Limpeza de arquivos temporários em caso de falha
-- [ ] Testes unitários com fakes (integração do pipeline, sem I/O real)
+- [x] `VideoPipeline.run(job) -> Path` (caminho do mp4 final)
+- [x] Dependências injetadas (fakes nos testes de unidade)
+- [x] Limpeza de arquivos temporários em caso de falha
+- [x] Testes unitários com fakes (integração do pipeline, sem I/O real)
 
 ---
 
@@ -528,13 +528,13 @@ O endpoint continua retornando 202; o processamento ocorre em background.
 (`job_timeout_seconds`) e atualiza status do job no banco.
 
 **Critérios de aceitação:**
-- [ ] `JobDispatcher` Protocol + `BackgroundTasksDispatcher`
-- [ ] `JobProcessor.process(job_id)` com `asyncio.Semaphore` + timeout
-- [ ] Transições: `pending → processing → completed/failed`
-- [ ] Idempotência (ignora job que não está `pending`)
-- [ ] Recuperação de jobs órfãos no `lifespan` da app
-- [ ] `POST /jobs` integrado; contrato HTTP (202) preservado
-- [ ] Testes de integração: job processa end-to-end com fakes
+- [x] `JobDispatcher` Protocol + `BackgroundTasksDispatcher`
+- [x] `JobProcessor.process(job_id)` com `asyncio.Semaphore` + timeout
+- [x] Transições: `pending → processing → completed/failed`
+- [x] Idempotência (ignora job que não está `pending`)
+- [x] Recuperação de jobs órfãos no `lifespan` da app
+- [x] `POST /jobs` integrado; contrato HTTP (202) preservado
+- [x] Testes de integração: job processa end-to-end com fakes
 
 ---
 
@@ -595,7 +595,7 @@ Testes que cobrem o fluxo completo: submeter job → checar status → baixar v�
 | E02-api-endpoints | TASK-005~008 | `feature/e02-api-endpoints` | 4h | ◻ Pendente |
 | E03-video-generator | TASK-009~012 | `feature/e03-video-generator` | 8h | ◻ Pendente |
 | E04-roteiro-audio | TASK-016~017 | `feature/e04-roteiro-audio` | 6h | ✅ |
-| E05-core-engine | TASK-018~020 | `feature/e05-core-engine` | 9h | 🟨 Parcial (018 ✅) |
+| E05-core-engine | TASK-018~020 | `feature/e05-core-engine` | 9h | ✅ |
 | E06-e2e-tests | TASK-013 | `feature/e06-e2e-tests` | 2h | ◻ Pendente |
 | E07-observability | TASK-014 | `feature/e07-observability` | 2h | ◻ Pendente |
 | E08-docker | TASK-015 | `feature/e08-docker` | 2h | ◻ Pendente |
