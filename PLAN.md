@@ -538,6 +538,40 @@ O endpoint continua retornando 202; o processamento ocorre em background.
 
 ---
 
+### ÉPICO E09 — Interface Web (Pixel Art)
+
+#### TASK-021 — Frontend pixel art servido pelo FastAPI
+
+**Estimativa:** 2h  
+**Branch:** `feature/e09-frontend`  
+**Dependências:** TASK-005, TASK-006, TASK-020 (API + processamento concluídos)
+
+**Descrição:**  
+Criar um frontend simples, servido pelo próprio FastAPI, para o usuário
+interagir pelo navegador (sem linha de comando). Diretório `static/` com
+`index.html`, `style.css` e `app.js`, montado via `StaticFiles` na rota `/`.
+Sem frameworks (React/Vue) — apenas HTML/CSS/JS vanilla. Estética de
+fliperama 8-bits (fonte 'Press Start 2P', botões 'chunky' com sombras sólidas
+3D, fundo escuro e cores neon/retro).
+
+**Critérios de aceitação:**
+- [x] Diretório `static/` com `index.html`, `style.css` e `app.js`
+- [x] `src/api/main.py` importa `StaticFiles` e monta `static/` em `/`
+- [x] O mount **não sombreia** `/api/v1/*` e `/health` (ordem de rotas)
+- [x] Estética pixel art: fonte 'Press Start 2P' (Google Fonts), botões chunky (box-shadow 3D), fundo escuro + cores neon
+- [x] Formulário envia `POST /api/v1/jobs` (prompt)
+- [x] Ao enviar: oculta form e mostra tela de loading retro (ex.: `[■■■□□□]`)
+- [x] Polling a cada 3s em `GET /api/v1/jobs/{job_id}`
+- [x] UI por status: `pending` (Na fila…), `processing` (Processando Magia…), `failed` (GAME OVER vermelho + erro), `completed` (Sucesso)
+- [x] Em `completed`: player `<video controls>` com o vídeo retornado (`output_url`)
+- [x] Testes da API permanecem passando
+- [x] `ruff` e `mypy` com 0 erros
+
+**Testes necessários:**
+- `tests/integration/test_frontend.py` — `GET /` (200 + marcador pixel), `/style.css`, `/app.js`; regressão: `/health` e `/api/v1/jobs` não são sombreados pelo mount.
+
+---
+
 ## v0.3 — Qualidade
 
 ### ÉPICO E06 — Suite de testes completa
@@ -599,8 +633,9 @@ Testes que cobrem o fluxo completo: submeter job → checar status → baixar v�
 | E06-e2e-tests | TASK-013 | `feature/e06-e2e-tests` | 2h | ◻ Pendente |
 | E07-observability | TASK-014 | `feature/e07-observability` | 2h | ◻ Pendente |
 | E08-docker | TASK-015 | `feature/e08-docker` | 2h | ◻ Pendente |
+| E09-frontend | TASK-021 | `feature/e09-frontend` | 2h | 🟨 Em progresso |
 
-**Total restante estimado:** ~33h
+**Total restante estimado:** ~35h
 
 ### Regras da abordagem híbrida
 - 1 branch por bloco lógico (não por task individual)

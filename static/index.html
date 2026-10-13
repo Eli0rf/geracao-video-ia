@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GAME STUDIO 8-BIT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="cabinet">
+    <header class="marquee">
+      <h1>GAME STUDIO</h1>
+      <p class="subtitle">GERADOR DE VIDEO 8-BIT</p>
+    </header>
+
+    <p class="credits">PRESS START TO GENERATE</p>
+
+    <!-- Tela: formulário -->
+    <section id="form-section" class="screen">
+      <label for="prompt">DESEJA CRIAR QUAL VIDEO HOJE?</label>
+      <textarea
+        id="prompt"
+        rows="4"
+        maxlength="2000"
+        placeholder="um gato astronauta dançando na lua..."
+        autocomplete="off"
+      ></textarea>
+      <button id="start-btn" class="btn btn-start" type="button">
+        GERAR VIDEO
+      </button>
+      <p class="hint">1 CREDIT = 1 VIDEO</p>
+    </section>
+
+    <!-- Tela: loading -->
+    <section id="loading-section" class="screen hidden" aria-live="polite">
+      <p class="loading-label">CARREGANDO</p>
+      <p id="loading-bar" class="loading-bar">[■□□□□□]</p>
+      <p id="loading-status" class="status">NA FILA...</p>
+    </section>
+
+    <!-- Tela: falha -->
+    <section id="gameover-section" class="screen hidden" aria-live="assertive">
+      <p class="gameover-title">GAME OVER</p>
+      <p class="gameover-msg">SUA MAQUINA TRAVOU!</p>
+      <p id="error-msg" class="error-msg"></p>
+      <button id="retry-btn" class="btn btn-retry" type="button">TENTAR DE NOVO</button>
+    </section>
+
+    <!-- Tela: sucesso -->
+    <section id="success-section" class="screen hidden" aria-live="polite">
+      <p class="success-title">LEVEL COMPLETE!</p>
+      <p class="success-msg">SEU VIDEO ESTA PRONTO</p>
+      <video id="player" class="player" controls preload="metadata"></video>
+      <button id="again-btn" class="btn btn-again" type="button">CRIAR OUTRO</button>
+    </section>
+
+    <footer class="footer">
+      <span>INSERT COIN</span>
+      <span>© 8-BIT STUDIO</span>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
