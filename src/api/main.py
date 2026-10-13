@@ -12,10 +12,12 @@ Cria e configura a instância da aplicação:
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.staticfiles import StaticFiles
 
 from src.api.deps import get_engine
 from src.api.error_handlers import http_exception_handler, validation_exception_handler
@@ -30,6 +32,9 @@ configure_logging()
 
 logger = get_logger(__name__)
 settings = get_settings()
+
+# Diretório do frontend (raiz do projeto) — caminho absoluto p/ independência do CWD
+STATIC_DIR = Path(__file__).resolve().parents[2] / "static"
 
 
 @asynccontextmanager
@@ -102,6 +107,13 @@ def create_app() -> FastAPI:
             version=settings.app_version,
             environment=settings.app_env,
         )
+
+    # ── Frontend estático (Bloco 5 / TASK-021) ─────────────────────────────────
+    # Mount por último: o catch-all "/" não pode sombrear /api/v1/* nem /health.
+    if STATIC_DIR.is_dir():
+        application.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+    else:  # pragma: no cover - falha de empacotamento, nunca em dev/CI
+        logger.warning("static_dir_missing", path=str(STATIC_DIR))
 
     logger.info(
         "app_created",
