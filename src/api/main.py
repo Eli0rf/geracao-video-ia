@@ -10,22 +10,38 @@ Cria e configura a instância da aplicação:
 """
 
 import time
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from src.api.deps import get_engine
 from src.api.error_handlers import http_exception_handler, validation_exception_handler
 from src.api.logging_config import configure_logging, get_logger
 from src.api.schemas import HealthResponse
 from src.api.v1.router import router as v1_router
 from src.config import get_settings
+from src.core.worker import recover_stale_jobs
 
 # Inicializa logging antes de qualquer outro import que possa logar
 configure_logging()
 
 logger = get_logger(__name__)
 settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Na subida, recupera jobs presos em `processing` (exceto em testes)."""
+    if not settings.is_testing:
+        try:
+            recovered = recover_stale_jobs(get_engine())
+            logger.info("startup_stale_recovery", recovered=recovered)
+        except Exception as exc:  # nunca impede a aplicação de subir
+            logger.warning("startup_stale_recovery_failed", error=str(exc))
+    yield
 
 
 def create_app() -> FastAPI:
@@ -41,6 +57,7 @@ def create_app() -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json",
+        lifespan=lifespan,
     )
 
     # ── Error handlers RFC 7807 ───────────────────────────────────────────────

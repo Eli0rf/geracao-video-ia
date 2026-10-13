@@ -10,13 +10,15 @@ GET    /api/v1/jobs/{id}/download → download do vídeo gerado
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlmodel import Session
 
-from src.api.deps import get_session
+from src.api.deps import get_job_processor, get_session
 from src.api.error_handlers import _problem_response
+from src.core.dispatcher import BackgroundTasksDispatcher
+from src.core.worker import JobProcessor
 from src.models.video_job import JobStatus, VideoJob
 from src.models.video_job_crud import (
     create_video_job,
@@ -107,11 +109,17 @@ class JobListResponse(BaseModel):
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 SessionDep = Annotated[Session, Depends(get_session)]
+ProcessorDep = Annotated[JobProcessor, Depends(get_job_processor)]
 
 
 @router.post("", status_code=202, response_model=JobResponse)
-async def post_job(body: JobCreateRequest, session: SessionDep) -> JobResponse:
-    """Cria um novo job de geração de vídeo (assíncrono)."""
+async def post_job(
+    body: JobCreateRequest,
+    session: SessionDep,
+    background_tasks: BackgroundTasks,
+    processor: ProcessorDep,
+) -> JobResponse:
+    """Cria um novo job (pending) e agenda o processamento em background (202)."""
     job = create_video_job(
         session,
         prompt=body.prompt,
@@ -120,6 +128,7 @@ async def post_job(body: JobCreateRequest, session: SessionDep) -> JobResponse:
         width=body.width,
         height=body.height,
     )
+    BackgroundTasksDispatcher(background_tasks, processor).dispatch(job.id)
     return JobResponse.from_job(job)
 
 
