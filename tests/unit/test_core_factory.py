@@ -29,7 +29,7 @@ from src.core.fakes import (
     FakeScriptGenerator,
     FakeVideoGenerator,
 )
-from src.core.interfaces import AudioSynthesizer, ScriptGenerator, VideoGenerator
+from src.core.interfaces import VideoGenerator
 
 
 def _inject_module(name: str, **attrs: object) -> None:
@@ -95,10 +95,14 @@ class TestGetGenerator:
 
 
 class TestGetScriptGenerator:
-    def test_falls_back_to_fake_when_ollama_absent(self) -> None:
-        # Módulo ollama ainda não existe neste bloco → ImportError → fake
-        gen = get_script_generator()
-        assert isinstance(gen, ScriptGenerator)
+    def test_falls_back_to_fake_when_ollama_unreachable(self) -> None:
+        # Servidor Ollama inacessível (is_available False) → fallback fake
+        with patch(
+            "src.core.generators.ollama.OllamaScriptGenerator.is_available",
+            return_value=False,
+        ):
+            gen = get_script_generator()
+        assert isinstance(gen, FakeScriptGenerator)
 
     def test_returns_real_when_ollama_available(self) -> None:
         # Módulo existe e is_available() == True → retorna a implementação real
@@ -139,11 +143,24 @@ class TestGetScriptGenerator:
             sys.modules.pop("src.core.generators", None)
             importlib.reload(factory)
 
+    def test_falls_back_when_ollama_build_raises(self) -> None:
+        # Construtor do Ollama levanta exceção → capturado → fake
+        with patch(
+            "src.core.generators.ollama.OllamaScriptGenerator.__init__",
+            side_effect=RuntimeError("falha de build"),
+        ):
+            assert isinstance(get_script_generator(), FakeScriptGenerator)
+
+
 
 class TestGetAudioSynthesizer:
-    def test_falls_back_to_fake_when_piper_absent(self) -> None:
-        # Módulo piper ainda não existe neste bloco → ImportError → fake
-        assert isinstance(get_audio_synthesizer(), AudioSynthesizer)
+    def test_falls_back_to_fake_when_piper_unavailable(self) -> None:
+        # Piper indisponível (is_available False) → fallback fake
+        with patch(
+            "src.core.generators.piper.PiperAudioSynthesizer.is_available",
+            return_value=False,
+        ):
+            assert isinstance(get_audio_synthesizer(), FakeAudioSynthesizer)
 
     def test_returns_real_when_piper_available(self) -> None:
         # Módulo existe e is_available() == True → retorna a implementação real
@@ -183,6 +200,14 @@ class TestGetAudioSynthesizer:
             sys.modules.pop("src.core.generators.piper", None)
             sys.modules.pop("src.core.generators", None)
             importlib.reload(factory)
+
+    def test_falls_back_when_piper_build_raises(self) -> None:
+        # Construtor do Piper levanta exceção → capturado → fake
+        with patch(
+            "src.core.generators.piper.PiperAudioSynthesizer.__init__",
+            side_effect=RuntimeError("falha de build"),
+        ):
+            assert isinstance(get_audio_synthesizer(), FakeAudioSynthesizer)
 
 
 class TestGetFakeGenerator:

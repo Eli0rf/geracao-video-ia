@@ -186,3 +186,67 @@ class TestGetSettings:
         s1 = cfg.get_settings()
         s2 = cfg.get_settings()
         assert s1.app_version == s2.app_version
+
+
+class TestLocalAISettings:
+    """Testa configurações de IA local: roteiro (Ollama) e áudio (Piper)."""
+
+    def test_default_ollama_host(self, monkeypatch):
+        monkeypatch.delenv("OLLAMA_HOST", raising=False)
+        import importlib
+
+        import src.config as cfg
+        importlib.reload(cfg)
+        settings = cfg.get_settings()
+        assert settings.ollama_host == "http://localhost:11434"
+
+    def test_default_ollama_model(self, monkeypatch):
+        monkeypatch.delenv("OLLAMA_MODEL", raising=False)
+        import importlib
+
+        import src.config as cfg
+        importlib.reload(cfg)
+        settings = cfg.get_settings()
+        assert settings.ollama_model == "llama3.2"
+
+    def test_default_piper_voice_path(self, monkeypatch):
+        monkeypatch.delenv("PIPER_VOICE_PATH", raising=False)
+        import importlib
+
+        import src.config as cfg
+        importlib.reload(cfg)
+        settings = cfg.get_settings()
+        assert "pt_BR" in settings.piper_voice_path
+
+    def test_ollama_timeout_validation(self, monkeypatch):
+        monkeypatch.setenv("OLLAMA_TIMEOUT_SECONDS", "0")
+        import importlib
+
+        import pytest
+        from pydantic import ValidationError
+
+        import src.config as cfg
+        importlib.reload(cfg)
+        with pytest.raises(ValidationError):
+            cfg.get_settings()
+
+    def test_piper_timeout_validation(self, monkeypatch):
+        monkeypatch.setenv("PIPER_TIMEOUT_SECONDS", "9999")
+        import importlib
+
+        import pytest
+        from pydantic import ValidationError
+
+        import src.config as cfg
+        importlib.reload(cfg)
+        with pytest.raises(ValidationError):
+            cfg.get_settings()
+
+    def test_ollama_max_retries_default(self, monkeypatch):
+        monkeypatch.delenv("OLLAMA_MAX_RETRIES", raising=False)
+        import importlib
+
+        import src.config as cfg
+        importlib.reload(cfg)
+        settings = cfg.get_settings()
+        assert settings.ollama_max_retries == 2

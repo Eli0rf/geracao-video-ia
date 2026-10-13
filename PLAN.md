@@ -441,10 +441,10 @@ Implementar `ScriptGenerator` concreto que chama Ollama local via `httpx`
 faz health-check em `/api/tags`.
 
 **Critérios de aceitação:**
-- [ ] Implementa `ScriptGenerator` de `src/core/interfaces.py`
-- [ ] Timeout e retry configuráveis; falha → `GenerationError`
-- [ ] Fallback para `FakeScriptGenerator` quando Ollama indisponível
-- [ ] Testes unitários com `httpx.MockTransport` (sem rede real)
+- [x] Implementa `ScriptGenerator` de `src/core/interfaces.py`
+- [x] Timeout e retry configuráveis; falha → `GenerationError`
+- [x] Fallback para `FakeScriptGenerator` quando Ollama indisponível
+- [x] Testes unitários com `httpx.MockTransport` (sem rede real)
 
 ---
 
@@ -460,12 +460,12 @@ Implementar `AudioSynthesizer` concreto que invoca o binário `piper` via
 `is_available()` verifica binário `piper` + arquivo de voz.
 
 **Critérios de aceitação:**
-- [ ] Implementa `AudioSynthesizer` de `src/core/interfaces.py`
-- [ ] `subprocess.run([...], shell=False)` (sem injeção de comando)
-- [ ] Timeout de subprocess configurável
-- [ ] `is_available()` False se binário/voz ausentes
-- [ ] Fallback para `FakeAudioSynthesizer`
-- [ ] Testes unitários com `subprocess` mockado (sem binário real)
+- [x] Implementa `AudioSynthesizer` de `src/core/interfaces.py`
+- [x] `subprocess.run([...], shell=False)` (sem injeção de comando)
+- [x] Timeout de subprocess configurável
+- [x] `is_available()` False se binário/voz ausentes
+- [x] Fallback para `FakeAudioSynthesizer`
+- [x] Testes unitários com `subprocess` mockado (sem binário real)
 
 ---
 
@@ -594,7 +594,7 @@ Testes que cobrem o fluxo completo: submeter job → checar status → baixar v�
 | E01-setup | TASK-001~004 | concluído | — | ✅ |
 | E02-api-endpoints | TASK-005~008 | `feature/e02-api-endpoints` | 4h | ◻ Pendente |
 | E03-video-generator | TASK-009~012 | `feature/e03-video-generator` | 8h | ◻ Pendente |
-| E04-roteiro-audio | TASK-016~017 | `feature/e04-roteiro-audio` | 6h | ◻ Pendente |
+| E04-roteiro-audio | TASK-016~017 | `feature/e04-roteiro-audio` | 6h | ✅ |
 | E05-core-engine | TASK-018~020 | `feature/e05-core-engine` | 9h | ◻ Pendente |
 | E06-e2e-tests | TASK-013 | `feature/e06-e2e-tests` | 2h | ◻ Pendente |
 | E07-observability | TASK-014 | `feature/e07-observability` | 2h | ◻ Pendente |

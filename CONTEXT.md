@@ -21,15 +21,16 @@
 
 ## Próxima Task a Executar
 
-**TASK-016 — OllamaScriptGenerator (roteiro via LLM local)** — Bloco 2 (PR 2)
+**TASK-018 — VideoAssembler (montagem FFmpeg)** — Bloco 3 (PR 3)
 
 ```bash
 git checkout develop
-git checkout -b feature/e04-roteiro-audio
+git checkout -b feature/e05-core-engine
 ```
 
-Ver `PLAN.md` seção TASK-016/TASK-017 para critérios de aceitação completos.
-Base de contratos (`src/core/interfaces.py`, fakes, factory) já pronta.
+Ver `PLAN.md` seção TASK-018 para critérios de aceitação completos.
+Roteiro (Ollama) e áudio (Piper) já implementados — próximos: montagem,
+pipeline e dispatcher.
 
 ---
 
@@ -52,8 +53,8 @@ Base de contratos (`src/core/interfaces.py`, fakes, factory) já pronta.
 | TASK-013 Testes E2E | ◻ Pendente | — |
 | TASK-014 Logging + Métricas | ◻ Pendente | — |
 | TASK-015 Docker | ◻ Pendente | — |
-| TASK-016 OllamaScriptGenerator | ◻ Pendente | — (Bloco 2) |
-| TASK-017 PiperAudioSynthesizer | ◻ Pendente | — (Bloco 2) |
+| TASK-016 OllamaScriptGenerator | ✅ Concluída | PR-2 (Bloco 2) |
+| TASK-017 PiperAudioSynthesizer | ✅ Concluída | PR-2 (Bloco 2) |
 | TASK-018 VideoAssembler (FFmpeg) | ◻ Pendente | — (Bloco 3) |
 | TASK-019 VideoPipeline | ◻ Pendente | — (Bloco 4) |
 | TASK-020 BackgroundDispatcher | ◻ Pendente | — (Bloco 4) |
@@ -90,6 +91,14 @@ Base de contratos (`src/core/interfaces.py`, fakes, factory) já pronta.
 - **Métricas:** `src/core/*` 100% cobertura; total 99%; ruff 0; mypy 0.
 - **Próximo:** Bloco 2 (PR-2) — `OllamaScriptGenerator` + `PiperAudioSynthesizer`.
 
+### Sessão 2026-10-12 — BUILD v0.2 — Roteiro e áudio (Bloco 2 / PR-2)
+- **Config:** bloco "IA local" em `src/config.py` — `ollama_host/model/timeout/max_retries`, `piper_binary/voice_path/timeout` (validados com `Field`).
+- **`OllamaScriptGenerator`** (`generators/ollama.py`): `httpx.Client` injetável; `is_available()` via `GET /api/tags`; `generate_script()` via `POST /api/generate` com `format=json`; retry em 5xx/rede (não em 4xx/timeout); parse+validação Pydantic → `Script`.
+- **`PiperAudioSynthesizer`** (`generators/piper.py`): `is_available()` sem subprocess (`shutil.which` + voz); `synthesize()` via `subprocess.run` (lista, `shell=False`, texto por stdin); timeout → `GenerationTimeoutError`.
+- **Testes:** `test_ollama_generator.py` (httpx.MockTransport), `test_piper_synth.py` (subprocess/which mockados), +config e ajustes na factory. 142 testes (124 unit + 18 integration).
+- **Métricas:** `src/core/*` 100% cobertura; total 99.22%; ruff 0; mypy 0.
+- **Próximo:** Bloco 3 (PR-3) — `VideoAssembler` (FFmpeg subprocess).
+
 ---
 
 ## Estrutura de Código Atual
@@ -108,11 +117,14 @@ src/
 ├── models/
 │   ├── video_job.py       ← VideoJob SQLModel (JobStatus enum)
 │   └── video_job_crud.py  ← create, get, list (func.count), update_status
-└── core/                  ← Motor de geração (Bloco 0&1 concluído)
+└── core/                  ← Motor de geração (Bloco 0&1 e 2 concluídos)
     ├── interfaces.py      ← Protocols: VideoGenerator/ScriptGenerator/AudioSynthesizer
     ├── errors.py          ← GenerationError, ModelUnavailableError, GenerationTimeoutError, AssemblyError
     ├── fakes.py           ← FakeVideoGenerator/ScriptGenerator/AudioSynthesizer
-    └── factory.py         ← get_generator/get_script_generator/get_audio_synthesizer + fallback
+    ├── factory.py         ← get_generator/get_script_generator/get_audio_synthesizer + fallback
+    └── generators/        ← Implementações concretas (ADR-006)
+        ├── ollama.py      ← OllamaScriptGenerator (roteiro via LLM local, httpx)
+        └── piper.py       ← PiperAudioSynthesizer (TTS local via subprocess)
 
 tests/
 ├── unit/          ← 38 testes (config, health, errors, video_job model)
@@ -124,12 +136,12 @@ alembic/
 
 ---
 
-## Métricas de Qualidade (BUILD v0.2 — PR-1)
+## Métricas de Qualidade (BUILD v0.2 — PR-2)
 
 | Métrica | Valor |
 |---|---|
-| Testes totais | 113 passando (95 unit + 18 integration) |
-| Cobertura | 99% (`src/core/*` = 100%) |
+| Testes totais | 142 passando (124 unit + 18 integration) |
+| Cobertura | 99.22% (`src/core/*` = 100%) |
 | ruff | ✅ 0 erros |
 | mypy | ✅ 0 erros |
 

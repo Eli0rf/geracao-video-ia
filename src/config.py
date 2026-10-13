@@ -55,6 +55,16 @@ class Settings(BaseSettings):
     hf_token: SecretStr = SecretStr("")
     hf_home: str = "~/.cache/huggingface"
 
+    # ── IA local: roteiro (Ollama) + áudio (Piper) — ADR-006 ──────────────────
+    ollama_host: str = "http://localhost:11434"
+    ollama_model: str = "llama3.2"
+    ollama_timeout_seconds: int = Field(default=30, ge=1, le=600)
+    ollama_max_retries: int = Field(default=2, ge=0, le=5)
+
+    piper_binary: str = "piper"
+    piper_voice_path: str = "~/.local/share/piper/voices/pt_BR-faber-medium.onnx"
+    piper_timeout_seconds: int = Field(default=60, ge=1, le=600)
+
     # ── Hardware ──────────────────────────────────────────────────────────────
     force_cpu: bool = False
 
