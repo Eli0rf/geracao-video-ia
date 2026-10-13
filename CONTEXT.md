@@ -21,16 +21,18 @@
 
 ## Próxima Task a Executar
 
-**TASK-019 — VideoPipeline (orquestrador de estágios)** — Bloco 4 (PR 4)
+**TASK-021 — Frontend pixel art (interface web)** — Bloco 5 (PR 5)
 
 ```bash
 git checkout develop
-git checkout -b feature/e05-core-engine
+git pull origin develop
+git checkout -b feature/e09-frontend
 ```
 
-Ver `PLAN.md` seção TASK-019/TASK-020 para critérios de aceitação completos.
-Roteiro (Ollama), áudio (Piper) e montagem (FFmpeg) já implementados.
-Próximos: pipeline de orquestração + dispatcher em background.
+Ver `PLAN.md` seção TASK-021 para critérios de aceitação completos.
+Motor de geração (roteiro, áudio, montagem, pipeline, worker, dispatcher) já
+concluído. Agora: `static/` (index.html, style.css, app.js) servido pelo
+FastAPI via `StaticFiles` em `/`.
 
 ---
 
@@ -56,8 +58,9 @@ Próximos: pipeline de orquestração + dispatcher em background.
 | TASK-016 OllamaScriptGenerator | ✅ Concluída | PR-2 (Bloco 2) |
 | TASK-017 PiperAudioSynthesizer | ✅ Concluída | PR-2 (Bloco 2) |
 | TASK-018 VideoAssembler (FFmpeg) | ✅ Concluída | PR-3 (Bloco 3) |
-| TASK-019 VideoPipeline | ◻ Pendente | — (Bloco 4) |
-| TASK-020 BackgroundDispatcher | ◻ Pendente | — (Bloco 4) |
+| TASK-019 VideoPipeline | ✅ Concluída | PR-4 (Bloco 4) |
+| TASK-020 BackgroundDispatcher | ✅ Concluída | PR-4 (Bloco 4) |
+| TASK-021 Frontend pixel art | ◻ Pendente | — (Bloco 5) |
 
 ---
 
@@ -107,6 +110,17 @@ Próximos: pipeline de orquestração + dispatcher em background.
 - **Métricas:** `src/core/*` 100% cobertura; total 99.29%; ruff 0; mypy 0.
 - **Próximo:** Bloco 4 (PR-4) — `VideoPipeline` + `JobProcessor` + `BackgroundTasksDispatcher`.
 
+### Sessão 2026-10-13 — BUILD v0.2 — Pipeline + Worker (Bloco 4 / PR-4)
+- **Protocol `Assembler`** adicionado em `interfaces.py` (desacopla o pipeline do `VideoAssembler` concreto).
+- **`VideoPipeline`** (`pipeline.py`, TASK-019): orquestra Script→Audio→Clipes→Assembly; `concat_wav_files` puro (stdlib `wave`); temporário limpo em `try/finally` mesmo com erro.
+- **`JobProcessor`** (`worker.py`, TASK-020): transições `pending→processing→completed/failed` com **sessão própria por job**, `asyncio.Semaphore` + `timeout` + `to_thread`; idempotente; `recover_stale_jobs` p/ jobs presos (lifespan).
+- **`dispatcher.py`** (TASK-020): Protocol `JobDispatcher` + `BackgroundTasksDispatcher`.
+- **API:** `post_job` agenda via `BackgroundTasks` mantendo 202; `deps.get_engine/get_job_processor`; `lifespan` de recuperação (gate `is_testing` + try/except).
+- **Testes:** `test_pipeline`, `test_worker` (engine em arquivo p/ concorrência), `test_dispatcher`, `test_jobs_dispatch` (integração). 192 testes (174 unit + 18 integration).
+- **Métricas:** total 99% cobertura; ruff 0; mypy 0 (27 arquivos).
+- **Validação:** smoke de integração real confirmou wiring completo (factory → pipeline → worker → banco → GET). Sem FFmpeg local → jobs `failed` (esperado); caminho `completed` coberto por fakes.
+- **Próximo:** Bloco 5 (PR-5) — Frontend pixel art (TASK-021).
+
 ---
 
 ## Estrutura de Código Atual
@@ -125,11 +139,14 @@ src/
 ├── models/
 │   ├── video_job.py       ← VideoJob SQLModel (JobStatus enum)
 │   └── video_job_crud.py  ← create, get, list (func.count), update_status
-└── core/                  ← Motor de geração (Bloco 0&1 e 2 concluídos)
-    ├── interfaces.py      ← Protocols: VideoGenerator/ScriptGenerator/AudioSynthesizer
+└── core/                  ← Motor de geração (Blocos 0–4 concluídos)
+    ├── interfaces.py      ← Protocols: Video/Script/Audio/Assembler
     ├── errors.py          ← GenerationError, ModelUnavailableError, GenerationTimeoutError, AssemblyError
     ├── fakes.py           ← FakeVideoGenerator/ScriptGenerator/AudioSynthesizer
     ├── factory.py         ← get_generator/get_script_generator/get_audio_synthesizer + fallback
+    ├── pipeline.py        ← VideoPipeline (Script→Audio→Clipes→Assembly) + concat_wav_files
+    ├── worker.py          ← JobProcessor (transições de status) + recover_stale_jobs
+    ├── dispatcher.py      ← Protocol JobDispatcher + BackgroundTasksDispatcher
     ├── generators/        ← Implementações concretas (ADR-006)
     │   ├── ollama.py      ← OllamaScriptGenerator (roteiro via LLM local, httpx)
     │   └── piper.py       ← PiperAudioSynthesizer (TTS local via subprocess)
@@ -146,12 +163,12 @@ alembic/
 
 ---
 
-## Métricas de Qualidade (BUILD v0.2 — PR-3)
+## Métricas de Qualidade (BUILD v0.2 — PR-4)
 
 | Métrica | Valor |
 |---|---|
-| Testes totais | 164 passando (146 unit + 18 integration, 2 skip sem ffmpeg) |
-| Cobertura | 99.29% (`src/core/*` = 100%) |
+| Testes totais | 192 passando (174 unit + 18 integration, 2 skip sem ffmpeg) |
+| Cobertura | 99% (`src/core/*` e `src/api/*` ≈ 100%) |
 | ruff | ✅ 0 erros |
 | mypy | ✅ 0 erros |
 
