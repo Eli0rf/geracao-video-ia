@@ -21,16 +21,16 @@
 
 ## Próxima Task a Executar
 
-**TASK-018 — VideoAssembler (montagem FFmpeg)** — Bloco 3 (PR 3)
+**TASK-019 — VideoPipeline (orquestrador de estágios)** — Bloco 4 (PR 4)
 
 ```bash
 git checkout develop
 git checkout -b feature/e05-core-engine
 ```
 
-Ver `PLAN.md` seção TASK-018 para critérios de aceitação completos.
-Roteiro (Ollama) e áudio (Piper) já implementados — próximos: montagem,
-pipeline e dispatcher.
+Ver `PLAN.md` seção TASK-019/TASK-020 para critérios de aceitação completos.
+Roteiro (Ollama), áudio (Piper) e montagem (FFmpeg) já implementados.
+Próximos: pipeline de orquestração + dispatcher em background.
 
 ---
 
@@ -55,7 +55,7 @@ pipeline e dispatcher.
 | TASK-015 Docker | ◻ Pendente | — |
 | TASK-016 OllamaScriptGenerator | ✅ Concluída | PR-2 (Bloco 2) |
 | TASK-017 PiperAudioSynthesizer | ✅ Concluída | PR-2 (Bloco 2) |
-| TASK-018 VideoAssembler (FFmpeg) | ◻ Pendente | — (Bloco 3) |
+| TASK-018 VideoAssembler (FFmpeg) | ✅ Concluída | PR-3 (Bloco 3) |
 | TASK-019 VideoPipeline | ◻ Pendente | — (Bloco 4) |
 | TASK-020 BackgroundDispatcher | ◻ Pendente | — (Bloco 4) |
 
@@ -99,6 +99,14 @@ pipeline e dispatcher.
 - **Métricas:** `src/core/*` 100% cobertura; total 99.22%; ruff 0; mypy 0.
 - **Próximo:** Bloco 3 (PR-3) — `VideoAssembler` (FFmpeg subprocess).
 
+### Sessão 2026-10-12 — BUILD v0.2 — Montagem FFmpeg (Bloco 3 / PR-3)
+- **Config:** `ffmpeg_binary` + `ffmpeg_timeout_seconds` (ADR-007).
+- **`VideoAssembler`** (`assembly/ffmpeg.py`): funções puras `build_concat_list`/`build_concat_command`/`build_mux_command`; `assemble()` em 2 passos (concat+normalização → mux áudio) via `subprocess.run([...], shell=False)`; `tempfile` com limpeza; erros → `AssemblyError`, timeout → `GenerationTimeoutError`.
+- **CI:** `.github/workflows/ci.yml` instala `ffmpeg` (apt) antes dos testes de integração.
+- **Testes:** `test_ffmpeg_assembler.py` (unit, sem binário — funções puras + `assemble` mockado) e `test_ffmpeg_assembly.py` (integração, `skipif` sem ffmpeg). 164 testes (146 unit + 18 integration, 2 skip).
+- **Métricas:** `src/core/*` 100% cobertura; total 99.29%; ruff 0; mypy 0.
+- **Próximo:** Bloco 4 (PR-4) — `VideoPipeline` + `JobProcessor` + `BackgroundTasksDispatcher`.
+
 ---
 
 ## Estrutura de Código Atual
@@ -122,9 +130,11 @@ src/
     ├── errors.py          ← GenerationError, ModelUnavailableError, GenerationTimeoutError, AssemblyError
     ├── fakes.py           ← FakeVideoGenerator/ScriptGenerator/AudioSynthesizer
     ├── factory.py         ← get_generator/get_script_generator/get_audio_synthesizer + fallback
-    └── generators/        ← Implementações concretas (ADR-006)
-        ├── ollama.py      ← OllamaScriptGenerator (roteiro via LLM local, httpx)
-        └── piper.py       ← PiperAudioSynthesizer (TTS local via subprocess)
+    ├── generators/        ← Implementações concretas (ADR-006)
+    │   ├── ollama.py      ← OllamaScriptGenerator (roteiro via LLM local, httpx)
+    │   └── piper.py       ← PiperAudioSynthesizer (TTS local via subprocess)
+    └── assembly/          ← Montagem do vídeo final (ADR-007)
+        └── ffmpeg.py      ← VideoAssembler (concat demuxer + mux áudio, subprocess)
 
 tests/
 ├── unit/          ← 38 testes (config, health, errors, video_job model)
@@ -136,12 +146,12 @@ alembic/
 
 ---
 
-## Métricas de Qualidade (BUILD v0.2 — PR-2)
+## Métricas de Qualidade (BUILD v0.2 — PR-3)
 
 | Métrica | Valor |
 |---|---|
-| Testes totais | 142 passando (124 unit + 18 integration) |
-| Cobertura | 99.22% (`src/core/*` = 100%) |
+| Testes totais | 164 passando (146 unit + 18 integration, 2 skip sem ffmpeg) |
+| Cobertura | 99.29% (`src/core/*` = 100%) |
 | ruff | ✅ 0 erros |
 | mypy | ✅ 0 erros |
 

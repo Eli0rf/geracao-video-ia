@@ -250,3 +250,33 @@ class TestLocalAISettings:
         importlib.reload(cfg)
         settings = cfg.get_settings()
         assert settings.ollama_max_retries == 2
+
+    def test_default_ffmpeg_binary(self, monkeypatch):
+        monkeypatch.delenv("FFMPEG_BINARY", raising=False)
+        import importlib
+
+        import src.config as cfg
+        importlib.reload(cfg)
+        settings = cfg.get_settings()
+        assert settings.ffmpeg_binary == "ffmpeg"
+
+    def test_default_ffmpeg_timeout(self, monkeypatch):
+        monkeypatch.delenv("FFMPEG_TIMEOUT_SECONDS", raising=False)
+        import importlib
+
+        import src.config as cfg
+        importlib.reload(cfg)
+        settings = cfg.get_settings()
+        assert settings.ffmpeg_timeout_seconds == 300
+
+    def test_ffmpeg_timeout_validation(self, monkeypatch):
+        monkeypatch.setenv("FFMPEG_TIMEOUT_SECONDS", "0")
+        import importlib
+
+        import pytest
+        from pydantic import ValidationError
+
+        import src.config as cfg
+        importlib.reload(cfg)
+        with pytest.raises(ValidationError):
+            cfg.get_settings()

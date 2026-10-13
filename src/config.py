@@ -65,6 +65,10 @@ class Settings(BaseSettings):
     piper_voice_path: str = "~/.local/share/piper/voices/pt_BR-faber-medium.onnx"
     piper_timeout_seconds: int = Field(default=60, ge=1, le=600)
 
+    # ── Montagem de vídeo (FFmpeg) — ADR-007 ─────────────────────────────────
+    ffmpeg_binary: str = "ffmpeg"
+    ffmpeg_timeout_seconds: int = Field(default=300, ge=1, le=3600)
+
     # ── Hardware ──────────────────────────────────────────────────────────────
     force_cpu: bool = False
 
