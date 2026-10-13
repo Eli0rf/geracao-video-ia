@@ -31,12 +31,19 @@ def client(engine):
     from src.api import deps
     from src.api.main import create_app
 
+    class _NoopProcessor:
+        """Processor falso: os testes de endpoint não executam o pipeline."""
+
+        async def process(self, job_id: str) -> None:
+            return None
+
     def override():
         with Session(engine) as s:
             yield s
 
     app = create_app()
     app.dependency_overrides[deps.get_session] = override
+    app.dependency_overrides[deps.get_job_processor] = _NoopProcessor
     with TestClient(app, raise_server_exceptions=True) as c:
         yield c
 
