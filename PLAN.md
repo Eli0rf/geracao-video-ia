@@ -483,11 +483,11 @@ concatena os clipes das cenas (concat demuxer), faz mux do áudio da
 narração e normaliza resolução/fps, tudo via `subprocess` + FFmpeg.
 
 **Critérios de aceitação:**
-- [ ] `VideoAssembler.assemble(clips, audio, out_path, width, height)`
-- [ ] Concat demuxer (`-f concat`) + mux de áudio (`-shortest`, `-c:a aac`)
-- [ ] Construção de comando como função pura testável
-- [ ] Erros → `AssemblyError`
-- [ ] Testes: construção de comando (puro) + execução real com `skipif`
+- [x] `VideoAssembler.assemble(clips, audio, out_path, width, height)`
+- [x] Concat demuxer (`-f concat`) + mux de áudio (`-shortest`, `-c:a aac`)
+- [x] Construção de comando como função pura testável
+- [x] Erros → `AssemblyError`
+- [x] Testes: construção de comando (puro) + execução real com `skipif`
       quando FFmpeg ausente
 
 ---
@@ -595,7 +595,7 @@ Testes que cobrem o fluxo completo: submeter job → checar status → baixar v�
 | E02-api-endpoints | TASK-005~008 | `feature/e02-api-endpoints` | 4h | ◻ Pendente |
 | E03-video-generator | TASK-009~012 | `feature/e03-video-generator` | 8h | ◻ Pendente |
 | E04-roteiro-audio | TASK-016~017 | `feature/e04-roteiro-audio` | 6h | ✅ |
-| E05-core-engine | TASK-018~020 | `feature/e05-core-engine` | 9h | ◻ Pendente |
+| E05-core-engine | TASK-018~020 | `feature/e05-core-engine` | 9h | 🟨 Parcial (018 ✅) |
 | E06-e2e-tests | TASK-013 | `feature/e06-e2e-tests` | 2h | ◻ Pendente |
 | E07-observability | TASK-014 | `feature/e07-observability` | 2h | ◻ Pendente |
 | E08-docker | TASK-015 | `feature/e08-docker` | 2h | ◻ Pendente |
