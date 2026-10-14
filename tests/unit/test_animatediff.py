@@ -75,22 +75,40 @@ def cpu_env() -> object:
 
 class TestDeviceResolution:
     def test_uses_mps_when_available(self, mps_env: object) -> None:
-        from src.core.generators.animatediff import AnimateDiffGenerator
+        from src.core.devices import resolve_device
 
-        gen = AnimateDiffGenerator()
-        assert gen.device == "mps"
+        assert resolve_device() == "mps"
 
     def test_falls_back_to_cpu_without_mps(self, cpu_env: object) -> None:
-        from src.core.generators.animatediff import AnimateDiffGenerator
+        from src.core.devices import resolve_device
 
-        gen = AnimateDiffGenerator()
-        assert gen.device == "cpu"
+        assert resolve_device() == "cpu"
 
     def test_force_cpu_overrides_mps(self, mps_env: object) -> None:
+        from src.core.devices import resolve_device
         from src.core.generators.animatediff import AnimateDiffGenerator
 
-        gen = AnimateDiffGenerator(force_cpu=True)
-        assert gen.device == "cpu"
+        assert resolve_device(force_cpu=True) == "cpu"
+        assert AnimateDiffGenerator(force_cpu=True).device == "cpu"
+
+    def test_generator_resolves_mps(self, mps_env: object) -> None:
+        from src.core.generators.animatediff import AnimateDiffGenerator
+
+        assert AnimateDiffGenerator().device == "mps"
+
+    def test_torch_missing_means_no_mps(self) -> None:
+        import sys
+
+        from src.core.devices import _torch_has_mps
+
+        mods = ("torch", "torch.backends", "torch.backends.mps")
+        saved = {k: sys.modules.pop(k, None) for k in mods}
+        try:
+            assert _torch_has_mps() is False
+        finally:
+            for k, v in saved.items():
+                if v is not None:
+                    sys.modules[k] = v
 
 
 class TestIsAvailable:

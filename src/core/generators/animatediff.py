@@ -10,12 +10,12 @@ módulo importe sem o extra `ai` instalado — `is_available()` retorna False
 nesse caso e a factory cai para o fake.
 """
 
-import sys
 from pathlib import Path
 from typing import Any
 
 import structlog
 
+from src.core.devices import resolve_device
 from src.core.errors import GenerationError, GenerationTimeoutError
 
 logger = structlog.get_logger(__name__)
@@ -23,32 +23,6 @@ logger = structlog.get_logger(__name__)
 _DEFAULT_MODEL_ID = "guoyww/animatediff-motion-adapter-v1-5-2"
 _DEFAULT_FPS = 8
 _MIN_VRAM_GB = 4
-
-
-def _torch_has_mps() -> bool:
-    """True se torch instalado e backend MPS (Apple Silicon) disponível."""
-    torch_mod = sys.modules.get("torch")
-    if torch_mod is None:
-        try:
-            import torch as torch_mod  # type: ignore[no-redef]
-        except ImportError:
-            return False
-    try:
-        return bool(torch_mod.backends.mps.is_available())  # type: ignore[union-attr]
-    except Exception:
-        return False
-
-
-def resolve_device(force_cpu: bool = False) -> str:
-    """
-    Resolve o device do pipeline: `mps` se Metal disponível, senão `cpu`.
-
-    Args:
-        force_cpu: Quando True, força `cpu` mesmo com MPS (settings/debug).
-    """
-    if force_cpu:
-        return "cpu"
-    return "mps" if _torch_has_mps() else "cpu"
 
 
 class AnimateDiffGenerator:
