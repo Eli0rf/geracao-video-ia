@@ -28,6 +28,15 @@ class AssemblyError(GenerationError):
     """Falha na montagem do vídeo final (FFmpeg)."""
 
 
+class ScriptValidationError(GenerationError):
+    """
+    Roteiro reprovado pelo auditor LLM após esgotar as tentativas (E11).
+
+    Falha no estágio de roteiro — o job termina como `failed` antes de
+    desperdiçar processamento na renderização de vídeo.
+    """
+
+
 def is_out_of_memory_error(exc: BaseException) -> bool:
     """
     Detecta erros de memória insuficiente (CUDA/MPS/CPU) para log dedicado.
