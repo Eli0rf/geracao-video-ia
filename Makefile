@@ -72,3 +72,50 @@ db-upgrade:
 ## db-revision: Cria nova migration (uso: make db-revision MSG="descrição")
 db-revision:
 	$(VENV)/bin/alembic revision --autogenerate -m "$(MSG)"
+
+
+
+## ─── Docker / Container ───────────────────────────────────────────────────────
+
+## docker-build: Builda a imagem Docker da API
+docker-build:
+	@echo "🔨 Buildando imagem: geracao-video-ia:0.1.0"
+	docker build --pull -t geracao-video-ia:0.1.0 .
+	@echo "✅ Build concluído."
+
+## docker-run: Roda o container API (porta 8000, volume outputs/)
+docker-run:
+	@echo "🚀 Iniciando container geracao-video-ia-api..."
+	docker run --rm -p 8000:8000 		-v $(CURDIR)/outputs:/app/outputs 		-e APP_ENV=production 		geracao-video-ia:0.1.0
+
+## docker-up: Suba a stack via docker compose (build + volumes)
+docker-up:
+	@echo "🚀 Subindo stack com docker compose..."
+	docker compose up -d --build
+
+## docker-down: Pare a stack e remova containers
+docker-down:
+	@echo "🛑 Parando stack..."
+	docker compose down
+
+## docker-logs: Acompanhe os logs do container API
+docker-logs:
+	@echo "📋 Logs do container API (Ctrl+C para parar)"
+	docker compose logs -f api
+
+## docker-clean: Remove container, imagem e volumes (cuidado!)
+docker-clean:
+	@echo "🗑️  Removendo container, imagem e volumes..."
+	docker compose down -v
+	docker rmi geracao-video-ia:0.1.0 || true
+	@echo "✅ Limpeza concluída."
+
+## docker-shell: Abra um shell no container em execução
+docker-shell:
+	@echo "🐚 Shell no container..."
+	docker compose exec api sh
+
+## docker-test: Roda a suíte de testes DROSA dentro do container
+docker-test:
+	@echo "🧪 Rodando testes dentro do container..."
+	docker compose run --rm api pytest tests/ -v --tb=short

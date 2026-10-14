@@ -1,0 +1,36 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  BLOCO 6 — Docker Compose: orquestração da API                             ║
+# ║  - Serviço: API FastAPI (porta 8000)                                      ║
+# ║  - Volume: outputs/ → máquina host (não se perde ao destruir o container) ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: geracao-video-ia:0.1.0
+    container_name: geracao-video-ia-api
+    restart: unless-stopped
+
+    # ─── Portas ─────────────────────────────────────────────────────────────────
+    ports:
+      - "8000:8000"
+
+    # ─── Volumes (persistência de outputs) ──────────────────────────────────────
+    volumes:
+      # outputs/ do container → outputs/ da máquina host
+      - ./outputs:/app/outputs
+
+    # ─── Variáveis de ambiente ──────────────────────────────────────────────────
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=sqlite:////app/data/app.db
+
+    # ─── Healthcheck (para `docker compose up --wait`) ──────────────────────────
+    healthcheck:
+      test: ["CMD-SHELL", "uvicorn --app-dir /app src.api.main:app --host 127.0.0.1 --port 8000 & sleep 2; curl -sf http://127.0.0.1:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
