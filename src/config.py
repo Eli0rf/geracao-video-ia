@@ -72,6 +72,14 @@ class Settings(BaseSettings):
     # ── Hardware ──────────────────────────────────────────────────────────────
     force_cpu: bool = False
 
+    # ── Fila de tarefas (Celery + Redis) — E12 / ADR-009 ─────────────────────
+    task_backend: Literal["background", "celery"] = "background"
+    celery_broker_url: str = "redis://localhost:6379/0"
+    celery_result_backend: str = "redis://localhost:6379/1"
+    # Executa a task em memória (sem broker) — usado pelos testes.
+    celery_task_always_eager: bool = False
+    celery_concurrency: int = Field(default=1, ge=1, le=16)
+
     # ── Dupla IA ──────────────────────────────────────────────────────────────
     gemini_api_key: SecretStr = SecretStr("")
 
@@ -99,6 +107,16 @@ class Settings(BaseSettings):
     def uppercase_log_level(cls, v: str) -> str:
         """Garante que LOG_LEVEL seja sempre uppercase."""
         return str(v).upper()
+
+    @field_validator("task_backend", mode="before")
+    @classmethod
+    def validate_task_backend(cls, v: str) -> str:
+        """Aceita apenas `background` ou `celery` (case/space-insensitive)."""
+        value = str(v).strip().lower()
+        if value not in ("background", "celery"):
+            msg = f"task_backend deve ser 'background' ou 'celery' (recebido: '{v}')"
+            raise ValueError(msg)
+        return value
 
     @field_validator("app_env", mode="before")
     @classmethod
