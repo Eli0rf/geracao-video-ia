@@ -17,7 +17,7 @@ from sqlmodel import Session
 
 from src.api.deps import get_job_processor, get_session
 from src.api.error_handlers import _problem_response
-from src.core.dispatcher import BackgroundTasksDispatcher
+from src.core.job_service import resolve_dispatcher
 from src.core.worker import JobProcessor
 from src.models.video_job import JobStatus, VideoJob
 from src.models.video_job_crud import (
@@ -120,7 +120,7 @@ async def post_job(
     processor: ProcessorDep,
     request: Request,
 ) -> JobResponse:
-    """Cria um novo job (pending) e agenda o processamento em background (202)."""
+    """Cria um novo job (pending) e enfileira o processamento (202)."""
     job = create_video_job(
         session,
         prompt=body.prompt,
@@ -133,7 +133,8 @@ async def post_job(
     correlation_id = getattr(request.state, "correlation_id", None) or request.headers.get(
         "X-Correlation-ID"
     )
-    BackgroundTasksDispatcher(background_tasks, processor).dispatch(
+    # `resolve_dispatcher` escolhe BackgroundTasks (dev/teste) ou Celery (E12).
+    resolve_dispatcher(background_tasks, processor).dispatch(
         job.id, correlation_id=correlation_id
     )
     return JobResponse.from_job(job)
