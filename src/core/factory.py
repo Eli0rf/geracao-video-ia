@@ -23,6 +23,21 @@ from src.core.interfaces import AudioSynthesizer, ScriptGenerator, VideoGenerato
 logger = structlog.get_logger(__name__)
 
 
+def _try_wan() -> VideoGenerator:
+    """
+    Tenta instanciar o Wan2.1 (primário, ADR-003).
+
+    Raises:
+        ModelUnavailableError: Se o modelo não pode ser carregado.
+    """
+    from src.core.generators.wan import WanVideoGenerator
+
+    generator: VideoGenerator = WanVideoGenerator()
+    if not generator.is_available():
+        raise ModelUnavailableError("Wan2.1 indisponível (deps/VRAM).")
+    return generator
+
+
 def _try_animatediff() -> VideoGenerator:
     """
     Tenta instanciar o AnimateDiff (fallback leve, ADR-003).
@@ -46,7 +61,7 @@ def get_generator(model_name: str) -> VideoGenerator:
     Retorna um `VideoGenerator` para o modelo pedido, com fallback.
 
     Estratégia:
-      1. Tenta o modelo pedido (wan2.1, cogvideox, hunyuan, animatediff).
+      1. Tenta o modelo pedido (wan2.1 → WanVideoGenerator; demais → AnimateDiff).
       2. Se indisponível, cai para AnimateDiff (fallback, ADR-003).
       3. Como último recurso, usa `FakeVideoGenerator` (nunca falha).
 
@@ -62,6 +77,12 @@ def get_generator(model_name: str) -> VideoGenerator:
     """
     if model_name == "fake":
         return get_fake_generator()
+
+    if model_name == "wan2.1":
+        try:
+            return _try_wan()
+        except (ImportError, ModuleNotFoundError, ModelUnavailableError) as exc:
+            logger.warning("video_generator_unavailable", model=model_name, reason=str(exc))
 
     try:
         return _try_animatediff()
