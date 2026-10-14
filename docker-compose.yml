@@ -1,7 +1,7 @@
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║  BLOCO 6 — Docker Compose: orquestração da API                             ║
 # ║  - Serviço: API FastAPI (porta 8000)                                      ║
-# ║  - Volume: outputs/ → máquina host (não se perde ao destruir o container) ║
+# ║  - Volumes: outputs/, /models e cache HF → máquina host                   ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
 services:
@@ -17,15 +17,20 @@ services:
     ports:
       - "8000:8000"
 
-    # ─── Volumes (persistência de outputs) ──────────────────────────────────────
+    # ─── Volumes (persistência de outputs, modelos e cache HF) ──────────────────
     volumes:
       # outputs/ do container → outputs/ da máquina host
       - ./outputs:/app/outputs
+      # Peso de modelos (se carregados localmente) → máquina host
+      - ./models:/app/models
+      # Cache do HuggingFace → máquina host (evita redownload)
+      - ./.cache/huggingface:/app/.cache/huggingface
 
     # ─── Variáveis de ambiente ──────────────────────────────────────────────────
     environment:
       - APP_ENV=production
       - DATABASE_URL=sqlite:////app/data/app.db
+      - HF_HOME=/app/.cache/huggingface
 
     # ─── Healthcheck (para `docker compose up --wait`) ──────────────────────────
     healthcheck:
