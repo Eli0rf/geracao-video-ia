@@ -1,4 +1,4 @@
-.PHONY: install dev test lint typecheck ci clean run help
+.PHONY: install dev test lint typecheck ci clean run help prefetch
 
 PYTHON := python3.13
 VENV := .venv
@@ -23,6 +23,11 @@ install:
 install-ai:
 	$(PIP) install -e ".[ai]"
 	@echo "✅ Dependências de IA instaladas."
+
+## prefetch: Pré-baixa os pesos dos modelos (Wan2.1 + AnimateDiff) no cache HF
+prefetch:
+	$(VENV)/bin/python scripts/prefetch_models.py
+	@echo "✅ Modelos em cache — pronto para subir o Docker."
 
 ## run: Roda a API em modo desenvolvimento com hot-reload
 run:

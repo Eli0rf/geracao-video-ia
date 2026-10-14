@@ -23,16 +23,17 @@ services:
       - ./outputs:/app/outputs
       # Banco SQLite persistido no host (DATABASE_URL=sqlite:////app/data/app.db)
       - ./data:/app/data
-      # Peso de modelos (se carregados localmente) → máquina host
+      # Peso de modelos / cache HF → máquina host (pré-fetch via `make prefetch`)
       - ./models:/app/models
-      # Cache do HuggingFace → máquina host (evita redownload)
+      # Cache antigo do HuggingFace (legado; HF_HOME agora aponta para /models)
       - ./.cache/huggingface:/app/.cache/huggingface
 
     # ─── Variáveis de ambiente ──────────────────────────────────────────────────
     environment:
       - APP_ENV=production
       - DATABASE_URL=sqlite:////app/data/app.db
-      - HF_HOME=/app/.cache/huggingface
+      # Cache HF dentro do volume ./models (downloads persistidos no host)
+      - HF_HOME=/app/models
 
     # ─── Healthcheck (para `docker compose up --wait`) ──────────────────────────
     healthcheck:
