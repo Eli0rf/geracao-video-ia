@@ -206,5 +206,40 @@ class TestConcatWavFiles:
             concat_wav_files([a, b], tmp_path / "out.wav")
 
 
+class TestStageDurations:
+    def test_logs_each_stage_with_duration_ms(self, tmp_path: Path, monkeypatch) -> None:
+        """Cada estágio crítico emite `pipeline_stage` com stage + duration_ms."""
+        from src.core import pipeline as pipeline_mod
+
+        records: list[tuple[str, dict]] = []
+
+        class _Rec:
+            def info(self, event: str, **kwargs: object) -> None:
+                records.append((event, dict(kwargs)))  # type: ignore[arg-type]
+
+            def warning(self, event: str, **kwargs: object) -> None:
+                records.append((event, dict(kwargs)))  # type: ignore[arg-type]
+
+        monkeypatch.setattr(pipeline_mod, "logger", _Rec())
+
+        script = RecordingScriptGenerator(scenes=2)
+        assembler = RecordingAssembler()
+        pipeline, _, _ = _make_pipeline(tmp_path, script, assembler)
+        job = VideoJob(prompt="um gato")
+        pipeline.run(job)
+
+        stages = [kw["stage"] for ev, kw in records if ev == "pipeline_stage"]
+        assert stages == ["script", "audio", "video", "assembly"]
+        for event, kw in records:
+            if event == "pipeline_stage":
+                assert isinstance(kw["duration_ms"], int | float)
+                assert kw["duration_ms"] >= 0
+                assert kw["job_id"] == job.id
+
+        completed = next(kw for ev, kw in records if ev == "pipeline_completed")
+        assert isinstance(completed["duration_ms"], int | float)
+        assert completed["job_id"] == job.id
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -15,6 +15,7 @@ temporário removido em `finally`, mesmo em caso de erro.
 
 import shutil
 import tempfile
+import time
 import wave
 from pathlib import Path
 
@@ -118,20 +119,27 @@ class VideoPipeline:
         """
         out_path = self._output_dir / f"{job.id}.mp4"
         n_scenes = 0
+        run_start = time.perf_counter()
         work = Path(tempfile.mkdtemp(prefix=f"gvpipeline_{job.id}_"))
         try:
+            # ── Script: roteiro ───────────────────────────────────────────
+            stage_start = time.perf_counter()
             script = self._script.generate_script(job.prompt)
             n_scenes = len(script.scenes)
+            self._log_stage(job.id, "script", stage_start)
 
             # ── Audio: narração de cada cena + trilha combinada ──────────
+            stage_start = time.perf_counter()
             audio_parts: list[Path] = []
             for i, scene in enumerate(script.scenes):
                 part = work / f"audio_{i}.wav"
                 self._audio.synthesize(scene.narration, part)
                 audio_parts.append(part)
             narration = concat_wav_files(audio_parts, work / "narration.wav")
+            self._log_stage(job.id, "audio", stage_start)
 
             # ── Clipes: vídeo de cada cena ──────────────────────────────
+            stage_start = time.perf_counter()
             clips: list[Path] = []
             for i, scene in enumerate(script.scenes):
                 clip = work / f"clip_{i}.mp4"
@@ -143,15 +151,35 @@ class VideoPipeline:
                     height=job.height,
                 )
                 clips.append(clip)
+            self._log_stage(job.id, "video", stage_start)
 
             # ── Assembly: MP4 final ─────────────────────────────────────
+            stage_start = time.perf_counter()
             result = self._assembler.assemble(
                 clips, narration, out_path, job.width, job.height
             )
+            self._log_stage(job.id, "assembly", stage_start)
         finally:
             # Limpeza garantida dos arquivos temporários, mesmo em erro.
             shutil.rmtree(work, ignore_errors=True)
             logger.info("pipeline_stage_done", job_id=job.id, scenes=n_scenes)
 
-        logger.info("pipeline_completed", job_id=job.id, out=str(result))
+        duration_ms = round((time.perf_counter() - run_start) * 1000, 2)
+        logger.info(
+            "pipeline_completed",
+            job_id=job.id,
+            out=str(result),
+            duration_ms=duration_ms,
+        )
         return result
+
+    @staticmethod
+    def _log_stage(job_id: str, stage: str, started: float) -> None:
+        """Registra a duração de um estágio crítico (E07 — métricas)."""
+        duration_ms = round((time.perf_counter() - started) * 1000, 2)
+        logger.info(
+            "pipeline_stage",
+            job_id=job_id,
+            stage=stage,
+            duration_ms=duration_ms,
+        )
