@@ -21,8 +21,9 @@
 
 ## Próxima Task a Executar
 
-**TASK-011 AnimateDiff (fallback leve)** — próxima pendente do motor de geração (ver PLAN.md).
+**TASK-012 Wan2.1 (primário)** — próxima pendente do motor de geração (ver PLAN.md).
 
+> ✅ **TASK-011 AnimateDiff concluída:** `AnimateDiffGenerator` (MPS/CPU) + 10 testes mockados; suite 205 passed, 2 skipped, cobertura 96%.
 > ✅ **TASK-013 E2E validada em 2026-10-14:** `docker compose up -d --build` + `python scripts/run_e2e.py` → job `completed`, `.mp4` real (3420 bytes, `ftypisom`) em `outputs/videos/`.
 
 ---
@@ -41,7 +42,7 @@
 | TASK-008 GET /jobs/{id}/download | ✅ Concluída | a4e0d28 (E02) |
 | TASK-009 Interface VideoGenerator | ✅ Concluída | PR-1 (Bloco 0&1) |
 | TASK-010 Worker assíncrono | ◻ Pendente | — (ver TASK-019/020) |
-| TASK-011 AnimateDiff (fallback) | ◻ Pendente | — |
+| TASK-011 AnimateDiff (fallback) | ✅ Concluída | 15e54fc |
 | TASK-012 Wan2.1 (primário) | ◻ Pendente | — |
 | TASK-013 Testes E2E | ✅ Validada (E2E PASS 2026-10-14: job completed, .mp4 3420 bytes ftypisom) | 3bb133a |
 | TASK-014 Logging + Métricas | ◻ Pendente | — |
