@@ -13,28 +13,17 @@
 |---|---|
 | **Fase pipeline** | BUILD v0.1 ✅ → próximo: BUILD v0.2 |
 | **Milestone ativa** | v0.2 — Core (Integração com IA) |
-| **Última atualização** | 2026-10-12 |
-| **Branch ativa** | `feature/e10-autonomous-docker` |
+| **Última atualização** | 2026-10-14 (E2E Docker validado: .mp4 real 3420 bytes) |
+| **Branch ativa** | `develop` |
 | **Versão** | 0.1.0-alpha |
 
 ---
 
 ## Próxima Task a Executar
 
-**TASK-013 Testes E2E + `scripts/run_e2e.py`** — Bloco de validação do pipeline com fakes reais via FFmpeg (lavfi). 
+**TASK-011 AnimateDiff (fallback leve)** — próxima pendente do motor de geração (ver PLAN.md).
 
-```bash
-# Fase 4 (executada no host do usuário, com Docker rodando):
-#   docker compose up -d --build
-#   python scripts/run_e2e.py
-#   ls -la outputs/videos/*.mp4   # devem existir com > 0 bytes
-```
-
-Ver `PLAN.md` seção TASK-013 para critérios de aceitação completos.
-O pipeline de geração (roteiro, áudio, montagem) já está concluído; o que falta é:
-  1. Fakes reais via ffmpeg (src/core/fakes.py);
-  2. Script E2E (scripts/run_e2e.py);
-  3. Validação local via `.venv` (ruff/mypy/pytest --cov) antes do merge.
+> ✅ **TASK-013 E2E validada em 2026-10-14:** `docker compose up -d --build` + `python scripts/run_e2e.py` → job `completed`, `.mp4` real (3420 bytes, `ftypisom`) em `outputs/videos/`.
 
 ---
 
@@ -54,7 +43,7 @@ O pipeline de geração (roteiro, áudio, montagem) já está concluído; o que 
 | TASK-010 Worker assíncrono | ◻ Pendente | — (ver TASK-019/020) |
 | TASK-011 AnimateDiff (fallback) | ◻ Pendente | — |
 | TASK-012 Wan2.1 (primário) | ◻ Pendente | — |
-| TASK-013 Testes E2E | ◻ Pendente | — |
+| TASK-013 Testes E2E | ✅ Validada (E2E PASS 2026-10-14: job completed, .mp4 3420 bytes ftypisom) | 3bb133a |
 | TASK-014 Logging + Métricas | ◻ Pendente | — |
 | TASK-015 Docker | ✅ Concluída | 6114e95 (feat(docker): adiciona Dockerfile, docker-compose.yml e targets de containerização no Makefile) |
 | TASK-016 OllamaScriptGenerator | ✅ Concluída | PR-2 (Bloco 2) |
