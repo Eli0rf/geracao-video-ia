@@ -16,7 +16,11 @@ from typing import Any
 import structlog
 
 from src.core.devices import resolve_device
-from src.core.errors import GenerationError, GenerationTimeoutError
+from src.core.errors import (
+    GenerationError,
+    GenerationTimeoutError,
+    is_out_of_memory_error,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -119,6 +123,9 @@ class WanVideoGenerator:
         except GenerationError:
             raise
         except Exception as exc:
+            logger.error(
+                "wan_load_failed", model=self._model_id, exc_info=True, error=str(exc)
+            )
             raise GenerationError(
                 f"Wan2.1: falha ao carregar {self._model_id}: {exc}"
             ) from exc
@@ -156,6 +163,19 @@ class WanVideoGenerator:
                     num_inference_steps=self._num_inference_steps,
                 )
             except Exception as exc:
+                if is_out_of_memory_error(exc):
+                    logger.error(
+                        "wan_out_of_memory",
+                        model=self._model_id,
+                        device=self._device,
+                        exc_info=True,
+                        error=str(exc),
+                    )
+                    raise GenerationError(
+                        f"Wan2.1: out of memory em {self._device} — "
+                        "libere memória ou reduza width/height/num_frames."
+                    ) from exc
+                logger.error("wan_inference_failed", exc_info=True, error=str(exc))
                 raise GenerationError(f"Wan2.1 falhou na inferência: {exc}") from exc
             frames = getattr(output, "frames", None)
             if frames is None:
@@ -170,12 +190,14 @@ class WanVideoGenerator:
                 future = pool.submit(_run)
                 return future.result(timeout=self._timeout)
         except concurrent.futures.TimeoutError as exc:
+            logger.warning("wan_timeout", timeout=self._timeout)
             raise GenerationTimeoutError(
                 f"Wan2.1 excedeu o tempo limite de {self._timeout}s."
             ) from exc
         except GenerationError:
             raise
         except Exception as exc:
+            logger.error("wan_generate_failed", exc_info=True, error=str(exc))
             raise GenerationError(f"Wan2.1 falhou: {exc}") from exc
 
     def _export_frames(self, frames: Any, out_path: Path, fps: int) -> None:
@@ -189,6 +211,7 @@ class WanVideoGenerator:
         except ImportError:
             pass
         except Exception as exc:
+            logger.error("wan_export_failed", exc_info=True, error=str(exc))
             raise GenerationError(
                 f"Wan2.1 falhou ao exportar vídeo: {exc}"
             ) from exc
@@ -202,6 +225,7 @@ class WanVideoGenerator:
                 "Nenhum exportador de vídeo (diffusers/imageio) disponível."
             ) from exc
         except Exception as exc:
+            logger.error("wan_export_failed", exc_info=True, error=str(exc))
             raise GenerationError(
                 f"Wan2.1 falhou ao exportar vídeo: {exc}"
             ) from exc

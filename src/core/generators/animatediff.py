@@ -16,11 +16,17 @@ from typing import Any
 import structlog
 
 from src.core.devices import resolve_device
-from src.core.errors import GenerationError, GenerationTimeoutError
+from src.core.errors import (
+    GenerationError,
+    GenerationTimeoutError,
+    is_out_of_memory_error,
+)
 
 logger = structlog.get_logger(__name__)
 
+# Motion adapter (peso leve) + base Stable Diffusion (pipeline completa).
 _DEFAULT_MODEL_ID = "guoyww/animatediff-motion-adapter-v1-5-2"
+_DEFAULT_BASE_MODEL_ID = "runwayml/stable-diffusion-v1-5"
 _DEFAULT_FPS = 8
 _MIN_VRAM_GB = 4
 
@@ -86,21 +92,31 @@ class AnimateDiffGenerator:
         if self._pipe is not None:
             return self._pipe
         try:
-            from diffusers import AnimateDiffPipeline
+            from diffusers import AnimateDiffPipeline, MotionAdapter
         except ImportError as exc:
             raise GenerationError(
                 "diffusers/torch não instalados (extra `ai`). "
                 "Instale com: pip install -e '.[ai]'."
             ) from exc
         try:
-            pipe = AnimateDiffPipeline.from_pretrained(self._model_id)
+            adapter = MotionAdapter.from_pretrained(self._model_id)
+            pipe = AnimateDiffPipeline.from_pretrained(
+                _DEFAULT_BASE_MODEL_ID, motion_adapter=adapter
+            )
             if hasattr(pipe, "to"):
                 pipe = pipe.to(self._device)
             self._pipe = pipe
             return pipe
         except Exception as exc:
+            logger.error(
+                "animatediff_load_failed",
+                model=self._model_id,
+                exc_info=True,
+                error=str(exc),
+            )
             raise GenerationError(
-                f"AnimateDiff: falha ao carregar {self._model_id}: {exc}"
+                f"AnimateDiff: falha ao carregar {self._model_id} + "
+                f"{_DEFAULT_BASE_MODEL_ID}: {exc}"
             ) from exc
 
     def generate(self, prompt: str, out_path: Path, **kwargs: object) -> Path:
@@ -132,6 +148,21 @@ class AnimateDiffGenerator:
                     width=width,
                 )
             except Exception as exc:
+                if is_out_of_memory_error(exc):
+                    logger.error(
+                        "animatediff_out_of_memory",
+                        model=self._model_id,
+                        device=self._device,
+                        exc_info=True,
+                        error=str(exc),
+                    )
+                    raise GenerationError(
+                        f"AnimateDiff: out of memory em {self._device} — "
+                        "libere memória ou reduza width/height/num_frames."
+                    ) from exc
+                logger.error(
+                    "animatediff_inference_failed", exc_info=True, error=str(exc)
+                )
                 raise GenerationError(f"AnimateDiff falhou na inferência: {exc}") from exc
             frames = getattr(output, "frames", None)
             if frames is None:
@@ -148,12 +179,14 @@ class AnimateDiffGenerator:
                 future = pool.submit(_run)
                 return future.result(timeout=self._timeout)
         except concurrent.futures.TimeoutError as exc:
+            logger.warning("animatediff_timeout", timeout=self._timeout)
             raise GenerationTimeoutError(
                 f"AnimateDiff excedeu o tempo limite de {self._timeout}s."
             ) from exc
         except GenerationError:
             raise
         except Exception as exc:
+            logger.error("animatediff_generate_failed", exc_info=True, error=str(exc))
             raise GenerationError(f"AnimateDiff falhou: {exc}") from exc
 
     def _export_frames(self, frames: Any, out_path: Path, fps: int) -> None:
@@ -167,6 +200,7 @@ class AnimateDiffGenerator:
         except ImportError:
             pass
         except Exception as exc:
+            logger.error("animatediff_export_failed", exc_info=True, error=str(exc))
             raise GenerationError(
                 f"AnimateDiff falhou ao exportar vídeo: {exc}"
             ) from exc
@@ -180,6 +214,7 @@ class AnimateDiffGenerator:
                 "Nenhum exportador de vídeo (diffusers/imageio) disponível."
             ) from exc
         except Exception as exc:
+            logger.error("animatediff_export_failed", exc_info=True, error=str(exc))
             raise GenerationError(
                 f"AnimateDiff falhou ao exportar vídeo: {exc}"
             ) from exc

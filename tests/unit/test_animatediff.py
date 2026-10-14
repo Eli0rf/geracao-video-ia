@@ -31,11 +31,14 @@ def _inject_torch(mps_available: bool) -> MagicMock:
 
 
 def _inject_diffusers(pipeline_mock: MagicMock) -> None:
-    """Injeta diffusers falso com AnimateDiffPipeline e export_to_video."""
+    """Injeta diffusers falso com AnimateDiffPipeline, MotionAdapter e export."""
     diffusers = types.ModuleType("diffusers")
     cls_mock = MagicMock()
     cls_mock.from_pretrained = MagicMock(return_value=pipeline_mock)
     diffusers.AnimateDiffPipeline = cls_mock  # type: ignore[attr-defined]
+    motion_cls = MagicMock()
+    motion_cls.from_pretrained = MagicMock(return_value=MagicMock(name="motion_adapter"))
+    diffusers.MotionAdapter = motion_cls  # type: ignore[attr-defined]
     sys.modules["diffusers"] = diffusers
     utils = types.ModuleType("diffusers.utils")
     utils.export_to_video = MagicMock(return_value=None)  # type: ignore[attr-defined]
@@ -199,6 +202,64 @@ class TestFactoryIntegration:
             assert isinstance(factory.get_generator("animatediff"), FakeVideoGenerator)
         finally:
             importlib.reload(factory)
+
+
+class TestLoadPipeline:
+    def test_downloads_motion_adapter_then_base_sd(self, mps_env: object) -> None:
+        """Carrega MotionAdapter (adapter) + base SD como pipeline (E07 fix)."""
+        from src.core.generators.animatediff import AnimateDiffGenerator
+
+        gen = AnimateDiffGenerator()
+        pipe = gen._load_pipeline()
+        # `.to(device)` devolve o clone do mock — assinar nele.
+        assert pipe is mps_env.to.return_value
+
+        d = sys.modules["diffusers"]
+        d.MotionAdapter.from_pretrained.assert_called_once()  # type: ignore[attr-defined]
+        adapter_repo = d.MotionAdapter.from_pretrained.call_args[0][0]  # type: ignore[attr-defined]
+        assert adapter_repo == "guoyww/animatediff-motion-adapter-v1-5-2"
+
+        args, kwargs = d.AnimateDiffPipeline.from_pretrained.call_args  # type: ignore[attr-defined]
+        assert "stable-diffusion" in args[0]
+        assert kwargs["motion_adapter"] is not None
+
+
+class TestFailureCapture:
+    def test_oom_logs_stack_trace_and_raises(
+        self, mps_env: object, tmp_path: Path, monkeypatch
+    ) -> None:
+        from src.core.generators import animatediff as mod
+
+        fake_logger = MagicMock()
+        monkeypatch.setattr(mod, "logger", fake_logger)
+        gen = mod.AnimateDiffGenerator()
+        gen._pipe = MagicMock(side_effect=RuntimeError("MPS backend out of memory"))
+
+        with pytest.raises(GenerationError, match="out of memory"):
+            gen.generate("p", tmp_path / "c.mp4")
+
+        assert fake_logger.error.called
+        args, kwargs = fake_logger.error.call_args
+        assert args[0] == "animatediff_out_of_memory"
+        assert kwargs.get("exc_info") is True
+
+    def test_inference_failure_logs_stack_trace(
+        self, mps_env: object, tmp_path: Path, monkeypatch
+    ) -> None:
+        from src.core.generators import animatediff as mod
+
+        fake_logger = MagicMock()
+        monkeypatch.setattr(mod, "logger", fake_logger)
+        gen = mod.AnimateDiffGenerator()
+        gen._pipe = MagicMock(side_effect=RuntimeError("disco cheio"))
+
+        with pytest.raises(GenerationError, match="falhou na infer"):
+            gen.generate("p", tmp_path / "c.mp4")
+
+        assert fake_logger.error.called
+        args, kwargs = fake_logger.error.call_args
+        assert args[0] == "animatediff_inference_failed"
+        assert kwargs.get("exc_info") is True
 
 
 if __name__ == "__main__":

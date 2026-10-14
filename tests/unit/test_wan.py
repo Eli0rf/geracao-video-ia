@@ -166,5 +166,73 @@ class TestFactoryIntegration:
             importlib.reload(factory)
 
 
+class TestFailureCapture:
+    def test_oom_logs_stack_trace_and_raises(
+        self, mps_env: object, tmp_path: Path, monkeypatch
+    ) -> None:
+        from src.core.generators import wan as mod
+
+        fake_logger = MagicMock()
+        monkeypatch.setattr(mod, "logger", fake_logger)
+        gen = mod.WanVideoGenerator()
+        gen._pipe = MagicMock(side_effect=RuntimeError("MPS backend out of memory"))
+
+        with pytest.raises(GenerationError, match="out of memory"):
+            gen.generate("p", tmp_path / "c.mp4")
+
+        assert fake_logger.error.called
+        args, kwargs = fake_logger.error.call_args
+        assert args[0] == "wan_out_of_memory"
+        assert kwargs.get("exc_info") is True
+
+    def test_load_failure_logs_stack_trace(
+        self, mps_env: object, tmp_path: Path, monkeypatch
+    ) -> None:
+        from src.core.generators import wan as mod
+
+        fake_logger = MagicMock()
+        monkeypatch.setattr(mod, "logger", fake_logger)
+        fp = sys.modules["diffusers"].WanPipeline.from_pretrained  # type: ignore[union-attr]
+        fp.side_effect = RuntimeError("falha de rede no hub")
+
+        with pytest.raises(GenerationError, match="Wan2.1"):
+            mod.WanVideoGenerator().generate("p", tmp_path / "c.mp4")
+
+        assert fake_logger.error.called
+        args, kwargs = fake_logger.error.call_args
+        assert args[0] == "wan_load_failed"
+        assert kwargs.get("exc_info") is True
+
+    def test_threadpool_infra_failure_logs_stack_trace(
+        self, mps_env: object, tmp_path: Path, monkeypatch
+    ) -> None:
+        import concurrent.futures
+
+        from src.core.generators import wan as mod
+
+        fake_logger = MagicMock()
+        monkeypatch.setattr(mod, "logger", fake_logger)
+
+        class _BoomPool:
+            def __init__(self, *args: object, **kwargs: object) -> None:
+                pass
+
+            def __enter__(self) -> "_BoomPool":
+                raise RuntimeError("pool indisponível")
+
+            def __exit__(self, *args: object) -> bool:
+                return False
+
+        monkeypatch.setattr(concurrent.futures, "ThreadPoolExecutor", _BoomPool)
+
+        with pytest.raises(GenerationError, match="pool indispon"):
+            mod.WanVideoGenerator().generate("p", tmp_path / "c.mp4")
+
+        assert fake_logger.error.called
+        args, kwargs = fake_logger.error.call_args
+        assert args[0] == "wan_generate_failed"
+        assert kwargs.get("exc_info") is True
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
