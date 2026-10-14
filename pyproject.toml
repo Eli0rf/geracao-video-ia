@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "geracao-video-ia"
-version = "0.1.0"
+version = "1.0.0"
 description = "API REST para geração de vídeo por IA com modelos open-source"
 readme = "README.md"
 requires-python = ">=3.13"
