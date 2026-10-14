@@ -14,25 +14,27 @@
 | **Fase pipeline** | BUILD v0.1 ✅ → próximo: BUILD v0.2 |
 | **Milestone ativa** | v0.2 — Core (Integração com IA) |
 | **Última atualização** | 2026-10-12 |
-| **Branch ativa** | `develop` |
+| **Branch ativa** | `feature/e10-autonomous-docker` |
 | **Versão** | 0.1.0-alpha |
 
 ---
 
 ## Próxima Task a Executar
 
-**TASK-021 — Frontend pixel art (interface web)** — Bloco 5 (PR 5)
+**TASK-013 Testes E2E + `scripts/run_e2e.py`** — Bloco de validação do pipeline com fakes reais via FFmpeg (lavfi). 
 
 ```bash
-git checkout develop
-git pull origin develop
-git checkout -b feature/e09-frontend
+# Fase 4 (executada no host do usuário, com Docker rodando):
+#   docker compose up -d --build
+#   python scripts/run_e2e.py
+#   ls -la outputs/videos/*.mp4   # devem existir com > 0 bytes
 ```
 
-Ver `PLAN.md` seção TASK-021 para critérios de aceitação completos.
-Motor de geração (roteiro, áudio, montagem, pipeline, worker, dispatcher) já
-concluído. Agora: `static/` (index.html, style.css, app.js) servido pelo
-FastAPI via `StaticFiles` em `/`.
+Ver `PLAN.md` seção TASK-013 para critérios de aceitação completos.
+O pipeline de geração (roteiro, áudio, montagem) já está concluído; o que falta é:
+  1. Fakes reais via ffmpeg (src/core/fakes.py);
+  2. Script E2E (scripts/run_e2e.py);
+  3. Validação local via `.venv` (ruff/mypy/pytest --cov) antes do merge.
 
 ---
 
@@ -225,7 +227,7 @@ python3 scripts/validate.py --code src/arquivo.py --spec "descrição"
 1. Leia este arquivo (`CONTEXT.md`)
 2. Leia `AGENTS.md` para as regras
 3. Confirme o branch: `git branch`
-4. Próxima task: **TASK-005** em `feature/task-005-post-jobs`
+4. Próxima task: **TASK-013** (Testes E2E + `scripts/run_e2e.py`) — já implementado; próximo passo é merge para `main`.
 
 ---
 
