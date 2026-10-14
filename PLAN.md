@@ -594,9 +594,9 @@ Testes que cobrem o fluxo completo: submeter job → checar status → baixar v�
 **Branch:** `feature/task-014-observability`
 
 **Critérios de aceitação:**
-- [ ] Todos os logs em JSON com campos: `timestamp`, `level`, `message`, `job_id`, `duration_ms`
-- [ ] Métricas básicas: jobs totais, jobs por status, tempo médio de geração
-- [ ] Endpoint `GET /metrics` no formato Prometheus
+- [x] Todos os logs em JSON com campos: `timestamp`, `level`, `message`, `job_id`, `duration_ms`
+- [x] Métricas básicas: jobs totais, jobs por status (`GET /metrics`); tempo médio via `duration_ms` em `job_processed` e `pipeline_stage`
+- [x] Endpoint `GET /metrics` no formato Prometheus (sem biblioteca externa — SQL `GROUP BY status`)
 
 ---
 
@@ -631,7 +631,7 @@ Testes que cobrem o fluxo completo: submeter job → checar status → baixar v�
 | E04-roteiro-audio | TASK-016~017 | `feature/e04-roteiro-audio` | 6h | ✅ |
 | E05-core-engine | TASK-018~020 | `feature/e05-core-engine` | 9h | ✅ |
 | E06-e2e-tests | TASK-013 | `feature/e06-e2e-tests` | 2h | ◻ Pendente |
-| E07-observability | TASK-014 | `feature/e07-observability` | 2h | ◻ Pendente |
+| E07-observability | TASK-014 | `feature/e07-observability` | 2h | ✅ |
 | E08-docker | TASK-015 | `feature/e08-docker` | 2h | ◻ Pendente |
 | E09-frontend | TASK-021 | `feature/e09-frontend` | 2h | 🟨 Em progresso |
 

@@ -13,18 +13,18 @@
 |---|---|
 | **Fase pipeline** | BUILD v0.1 ✅ → próximo: BUILD v0.2 |
 | **Milestone ativa** | v0.2 — Core (Integração com IA) |
-| **Última atualização** | 2026-10-14 (TASK-012 Wan2.1 concluída: WanVideoGenerator + devices.py) |
-| **Branch ativa** | `feature/e04-wan21` |
+| **Última atualização** | 2026-10-14 (E07 Observabilidade: correlation ID, duração por estágio, OOM, GET /metrics, prefetch) |
+| **Branch ativa** | `feature/e07-observability` |
 | **Versão** | 0.1.0-alpha |
 
 ---
 
 ## Próxima Task a Executar
 
-**TASK-014 Logging + Métricas (E07-observability)** — próxima pendente (ver PLAN.md). Obs.: TASK-010 pendente de decisão (ver nota TASK-019/020).
+**Consolidar os ramos E03/E04/E07 em PR para `develop`**; depois retomar pendências (TASK-010 — ver nota TASK-019/020).
 
-> ✅ **TASK-011 AnimateDiff concluída:** `AnimateDiffGenerator` (MPS/CPU) + 10 testes mockados; suite 205 passed, 2 skipped, cobertura 96%.
 > ✅ **TASK-012 Wan2.1 concluída:** `WanVideoGenerator` (`WanPipeline` T2V, diffusers>=0.33) + `src/core/devices.py` + roteamento `wan2.1` na factory; 10 testes mockados; suite 217 passed, 2 skipped, cobertura 93%, mypy 0, ruff ok.
+> ✅ **Bloco 9 / E07 Observabilidade concluído (TASK-014):** correlation ID do middleware ao worker (structlog contextvars + `X-Correlation-ID`), `duration_ms` por estágio do pipeline, captura de OOM/falhas com stack trace nos geradores, `GET /metrics` (Prometheus, SQL `GROUP BY`), `scripts/prefetch_models.py` + `make prefetch` + `HF_HOME=/app/models`. Fix: AnimateDiff agora carrega MotionAdapter + base SD. Suite **250 passed, 2 skipped, cobertura 94%**, mypy 0, ruff ok.
 > ✅ **TASK-013 E2E validada em 2026-10-14:** `docker compose up -d --build` + `python scripts/run_e2e.py` → job `completed`, `.mp4` real (3420 bytes, `ftypisom`) em `outputs/videos/`.
 
 ---
@@ -46,7 +46,7 @@
 | TASK-011 AnimateDiff (fallback) | ✅ Concluída | 15e54fc |
 | TASK-012 Wan2.1 (primário) | ✅ Concluída | d77a66e |
 | TASK-013 Testes E2E | ✅ Validada (E2E PASS 2026-10-14: job completed, .mp4 3420 bytes ftypisom) | 3bb133a |
-| TASK-014 Logging + Métricas | ◻ Pendente | — |
+| TASK-014 Logging + Métricas | ✅ Concluída | 1a9e864 (E07: correlation/metrics/pipeline/generators/prefetch) |
 | TASK-015 Docker | ✅ Concluída | 6114e95 (feat(docker): adiciona Dockerfile, docker-compose.yml e targets de containerização no Makefile) |
 | TASK-016 OllamaScriptGenerator | ✅ Concluída | PR-2 (Bloco 2) |
 | TASK-017 PiperAudioSynthesizer | ✅ Concluída | PR-2 (Bloco 2) |
