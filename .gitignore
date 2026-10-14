@@ -72,3 +72,7 @@ node_modules/
 
 # Banco de dados local gerado
 data/*.db
+
+# Broker Redis (volume ./data/redis do docker-compose) — dados de fila, não versionar
+data/redis/
+*.rdb
