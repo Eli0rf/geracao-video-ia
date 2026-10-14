@@ -6,9 +6,10 @@ Agrega todos os sub-routers de v1. Novos endpoints são registrados aqui.
 
 from fastapi import APIRouter
 
-from src.api.v1 import jobs
+from src.api.v1 import jobs, metrics
 
 router = APIRouter(prefix="/api/v1")
 
 # Registra sub-routers
 router.include_router(jobs.router)
+router.include_router(metrics.router)
