@@ -54,7 +54,7 @@ FastAPI via `StaticFiles` em `/`.
 | TASK-012 Wan2.1 (primário) | ◻ Pendente | — |
 | TASK-013 Testes E2E | ◻ Pendente | — |
 | TASK-014 Logging + Métricas | ◻ Pendente | — |
-| TASK-015 Docker | ◻ Pendente | — |
+| TASK-015 Docker | ✅ Concluída | 6114e95 (feat(docker): adiciona Dockerfile, docker-compose.yml e targets de containerização no Makefile) |
 | TASK-016 OllamaScriptGenerator | ✅ Concluída | PR-2 (Bloco 2) |
 | TASK-017 PiperAudioSynthesizer | ✅ Concluída | PR-2 (Bloco 2) |
 | TASK-018 VideoAssembler (FFmpeg) | ✅ Concluída | PR-3 (Bloco 3) |
