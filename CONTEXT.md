@@ -11,22 +11,27 @@
 
 | Campo | Valor |
 |---|---|
-| **Fase pipeline** | BUILD v0.1 ✅ → próximo: BUILD v0.2 |
-| **Milestone ativa** | v0.2 — Core (Integração com IA) |
-| **Última atualização** | 2026-10-14 (E12 Celery+Redis: fila de tasks, worker dedicado, ADR-009; E11 consolidado na develop) |
-| **Branch ativa** | `feature/e12-celery-redis` |
-| **Versão** | 0.1.0-alpha |
+| **Fase pipeline** | SHIP ✅ — **v1.0.0 liberada** (DEFINE → PLAN → BUILD → VERIFY → REVIEW → SHIP) |
+| **Milestone ativa** | v1.0 — Produção (concluída) |
+| **Última atualização** | 2026-10-14 (**v1.0.0 LIBERADA** — tag `v1.0.0` em `main`; E12 consolidado na develop; documentação de encerramento) |
+| **Branch ativa** | `main` (tag `v1.0.0`) — projeto em fase SHIP |
+| **Versão** | **1.0.0** |
 
 ---
 
 ## Próxima Task a Executar
 
-**PR `feature/e12-celery-redis` → `develop`** e depois PR `develop`→`main` para release (regra do AGENTS.md: nunca push direto em `main`). E11 já consolidado na develop (`2be9cc6`, merge FF validado com 260 passed / 94%).
+**Nenhuma pendente — v1.0.0 liberada.** Trabalhos futuros (fora do escopo da v1.0):
 
-> ✅ **Bloco 9 / E07 Observabilidade concluído (TASK-014):** correlation ID do middleware ao worker (structlog contextvars + `X-Correlation-ID`), `duration_ms` por estágio do pipeline, captura de OOM/falhas com stack trace nos geradores, `GET /metrics` (Prometheus, SQL `GROUP BY`), `scripts/prefetch_models.py` + `make prefetch` + `HF_HOME=/app/models`. Fix: AnimateDiff agora carrega MotionAdapter + base SD. Suite **250 passed, 2 skipped, cobertura 94%**, mypy 0, ruff ok.
-> ✅ **Bloco 10 / E11 Anti-Alucinação concluído (TASK-022):** `OllamaScriptGenerator` com LLM-as-a-Judge — auditor valida fidelidade do roteiro ao prompt; loop de auto-correção (máx. 3) injetando o `reason`; **fail-closed** (JSON inválido do juiz = reprovação + reason padrão + warning); `ScriptValidationError` falha o job antes de renderizar. 10 testes novos (MockTransport: 1ª aprovação, correção na 2ª, falha máxima, fail-closed, payload do juiz, herança de `correlation_id`). Suite **260 passed, 2 skipped, cobertura 93,74%**, mypy 0, ruff ok.
-> ✅ **Bloco 11 / E12 Celery + Redis concluído (TASK-023):** fila de tasks em produção via `CeleryDispatcher` (Protocol `JobDispatcher` intacto — endpoint e `JobProcessor` não mudaram). `src/core/celery_app.py` (app `geracao_video`, broker/backend Redis, task `video.process_job` com `acks_late`/`task_reject_on_worker_lost`/time limits/`max_tasks_per_child=50`); `src/core/job_service.py` extrai `build_job_processor` + `resolve_dispatcher` (escolha `background` em dev/teste vs `celery` em produção via `TASK_BACKEND`); `src/core/database.py` tira o engine da API. `correlation_id` viaja para o worker e é religado nos contextvars (E07). `docker-compose.yml` com serviços `redis` (volume persistente) e `worker`; `make worker`/`redis-up`/`redis-down`; `.env.example` com bloco `CELERY_*`. Suíte **294 passed, 2 skipped, cobertura 94%**, mypy 0, ruff ok. ADR-009 criado.
-> ✅ **TASK-013 E2E validada em 2026-10-14:** `docker compose up -d --build` + `python scripts/run_e2e.py` → job `completed`, `.mp4` real (3420 bytes, `ftypisom`) em `outputs/videos/`.
+1. Abrir a **GitHub Release** da tag `v1.0.0` com as release notes.
+2. Criar o arquivo `LICENSE` (MIT) — o `README` já declara a licença, mas o arquivo
+   não existe no repositório.
+3. Migrar o banco de `SQLite` para **Postgres** caso a stack passe a rodar com
+   múltiplos workers concorrentes (ver consequência registrada no ADR-009).
+4. Adicionar profundidade/length da fila ao `GET /metrics` (tamanho da fila Redis).
+
+> ✅ **Bloco 12 / Fechamento v1.0:** consolidação das branches (`feature/e12-celery-redis` → `develop` → `main`, ambos merges Fast-Forward), bump de versão para `1.0.0`, tag `v1.0.0`, `.gitignore` corrigido para ignorar o dump do Redis (`data/redis/`), `README.md` reescrito (Quick Start real com `make install`, stack Docker de 3 serviços, arquitetura em camadas, tabela de endpoints e dos 9 ADRs), `PLAN.md` com todos os épicos marcados ✅ e `CONTEXT.md` de encerramento. Suíte final: **294 passed, 2 skipped, cobertura 93,76%**, ruff 0, mypy 0.
+> ✅ **Bloco 11 / E12 Celery + Redis concluído (TASK-023):** fila de tasks em produção via `CeleryDispatcher` (Protocol `JobDispatcher` intacto — endpoint e `JobProcessor` não mudaram). `src/core/celery_app.py` (app `geracao_video`, broker/backend Redis, task `video.process_job` com `acks_late`/`task_reject_on_worker_lost`/time limits/`max_tasks_per_child=50`); `src/core/job_service.py` extrai `build_job_processor` + `resolve_dispatcher` (escolha `background` em dev/teste vs `celery` em produção via `TASK_BACKEND`); `src/core/database.py` tira o engine da API. `correlation_id` viaja para o worker e é religado nos contextvars (E07). `docker-compose.yml` com serviços `redis` (volume persistente) e `worker`; `make worker`/`redis-up`/`redis-down`; `.env.example` com bloco `CELERY_*`. Suite **294 passed, 2 skipped, cobertura 94%**, mypy 0, ruff ok. ADR-009 criado.
 
 ---
 

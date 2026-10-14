@@ -637,7 +637,7 @@ Testes que cobrem o fluxo completo: submeter job → checar status → baixar v�
 
 ---
 
-## v1.0 — Produção
+## v1.0 — Produção ✅ CONCLUÍDO (2026-10-14)
 
 ### ÉPICO E08 — Containerização
 
@@ -647,10 +647,17 @@ Testes que cobrem o fluxo completo: submeter job → checar status → baixar v�
 **Branch:** `feature/task-015-docker`
 
 **Critérios de aceitação:**
-- [ ] `Dockerfile` multi-stage (build + runtime)
-- [ ] `docker-compose.yml` com API + volumes para outputs e modelos
-- [ ] `docker compose up` sobe a stack completa
-- [ ] Imagem final < 2GB (sem pesos de modelos)
+- [x] `Dockerfile` multi-stage (build + runtime)
+- [x] `docker-compose.yml` com API + volumes para outputs e modelos
+- [x] `docker compose up` sobe a stack completa (api + worker + redis, E12)
+- [x] Imagem final < 2GB (sem pesos de modelos)
+
+**Entrega da v1.0.0:**
+- Tag `v1.0.0` em `main` (`038b033`), com `pyproject.toml` em `version = "1.0.0"`.
+- Suíte final: **294 passed, 2 skipped**, cobertura **93,76%**, ruff 0, mypy 0.
+- Documentação de encerramento: `README.md` reescrito (Quick Start real, stack
+  Docker de 3 serviços, arquitetura em camadas, tabela de endpoints, tabela dos
+  9 ADRs) + este `PLAN.md` + `CONTEXT.md`.
 
 ---
 
@@ -663,18 +670,18 @@ Testes que cobrem o fluxo completo: submeter job → checar status → baixar v�
 | Bloco | Tasks | Branch | Estimativa | Status |
 |---|---|---|---|---|
 | E01-setup | TASK-001~004 | concluído | — | ✅ |
-| E02-api-endpoints | TASK-005~008 | `feature/e02-api-endpoints` | 4h | ◻ Pendente |
-| E03-video-generator | TASK-009~012 | `feature/e03-video-generator` | 8h | ◻ Pendente |
+| E02-api-endpoints | TASK-005~008 | `feature/e02-api-endpoints` | 4h | ✅ |
+| E03-video-generator | TASK-009~012 | `feature/e03-video-generator` | 8h | ✅ |
 | E04-roteiro-audio | TASK-016~017 | `feature/e04-roteiro-audio` | 6h | ✅ |
 | E05-core-engine | TASK-018~020 | `feature/e05-core-engine` | 9h | ✅ |
-| E06-e2e-tests | TASK-013 | `feature/e06-e2e-tests` | 2h | ◻ Pendente |
+| E06-e2e-tests | TASK-013 | `feature/e06-e2e-tests` | 2h | ✅ |
 | E07-observability | TASK-014 | `feature/e07-observability` | 2h | ✅ |
 | E11-llm-judge | TASK-022 | `feature/e11-llm-judge` | 3h | ✅ |
 | E12-celery-redis | TASK-023 | `feature/e12-celery-redis` | 4h | ✅ |
-| E08-docker | TASK-015 | `feature/e08-docker` | 2h | ◻ Pendente |
-| E09-frontend | TASK-021 | `feature/e09-frontend` | 2h | 🟨 Em progresso |
+| E08-docker | TASK-015 | `feature/e08-docker` | 2h | ✅ |
+| E09-frontend | TASK-021 | `feature/e09-frontend` | 2h | ✅ |
 
-**Total restante estimado:** ~35h
+**Total restante estimado:** 0h — **v1.0.0 entregue em 2026-10-14** (tag `v1.0.0` em `main`).
 
 ### Regras da abordagem híbrida
 - 1 branch por bloco lógico (não por task individual)
