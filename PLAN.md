@@ -616,6 +616,27 @@ Testes que cobrem o fluxo completo: submeter job → checar status → baixar v�
 
 ---
 
+### ÉPICO E12 — Fila de tarefas (Celery + Redis)
+
+#### TASK-023 — Migração do despacho para Celery
+
+**Estimativa:** 4h  
+**Branch:** `feature/e12-celery-redis`  
+**ADR:** `docs/adr/ADR-009-celery-redis.md` (substitui ADR-008 em produção)
+
+**Critérios de aceitação:**
+- [x] `celery` + `redis` nas dependências de runtime (`pyproject.toml`)
+- [x] `docker-compose.yml` com serviços `redis` (broker + volume persistente) e `worker` (Celery)
+- [x] `src/core/celery_app.py` com app `geracao_video` (broker/backend das settings) e task `video.process_job`
+- [x] `CeleryDispatcher` implementa o Protocol `JobDispatcher` — endpoint e `JobProcessor` intactos
+- [x] `resolve_dispatcher` escolhe `background` (dev/teste) ou `celery` (produção) via `TASK_BACKEND`
+- [x] `correlation_id` repassado para dentro do worker e religado nos contextvars do structlog (E07)
+- [x] Resiliência: `acks_late`, `task_reject_on_worker_lost`, time limits e `max_tasks_per_child`
+- [x] Suíte roda sem Redis (`task_always_eager` forçado no `conftest.py`); cobertura > 90%, ruff/mypy 0
+- [x] `make worker` / `make redis-up` documentados; `.env.example` com bloco `CELERY_*`
+
+---
+
 ## v1.0 — Produção
 
 ### ÉPICO E08 — Containerização
@@ -649,6 +670,7 @@ Testes que cobrem o fluxo completo: submeter job → checar status → baixar v�
 | E06-e2e-tests | TASK-013 | `feature/e06-e2e-tests` | 2h | ◻ Pendente |
 | E07-observability | TASK-014 | `feature/e07-observability` | 2h | ✅ |
 | E11-llm-judge | TASK-022 | `feature/e11-llm-judge` | 3h | ✅ |
+| E12-celery-redis | TASK-023 | `feature/e12-celery-redis` | 4h | ✅ |
 | E08-docker | TASK-015 | `feature/e08-docker` | 2h | ◻ Pendente |
 | E09-frontend | TASK-021 | `feature/e09-frontend` | 2h | 🟨 Em progresso |
 
