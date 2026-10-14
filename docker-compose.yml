@@ -1,39 +1,59 @@
 # ╔══════════════════════════════════════════════════════════════════════════════╗
-# ║  BLOCO 6 — Docker Compose: orquestração da API                             ║
-# ║  - Serviço: API FastAPI (porta 8000)                                      ║
+# ║  BLOCO 11 — Docker Compose: API + fila Celery + worker                     ║
+# ║  - Serviços: api (FastAPI, 8000), worker (Celery), redis (broker)          ║
 # ║  - Volumes: outputs/, /models e cache HF → máquina host                   ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
+# Bloco/comum a todos os serviços da aplicação (evita repetição de build/volumes)
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: geracao-video-ia:0.1.0
+  restart: unless-stopped
+  volumes:
+    # outputs/ do container → outputs/ da máquina host
+    - ./outputs:/app/outputs
+    # Banco SQLite persistido no host (DATABASE_URL=sqlite:////app/data/app.db)
+    - ./data:/app/data
+    # Peso de modelos / cache HF → máquina host (pré-fetch via `make prefetch`)
+    - ./models:/app/models
+    # Cache antigo do HuggingFace (legado; HF_HOME agora aponta para /models)
+    - ./.cache/huggingface:/app/.cache/huggingface
+  environment: &app-env
+    - APP_ENV=production
+    - DATABASE_URL=sqlite:////app/data/app.db
+    # Cache HF dentro do volume ./models (downloads persistidos no host)
+    - HF_HOME=/app/models
+    # Fila Celery + Redis (E12 / ADR-009) — aponta para o serviço `redis`
+    - TASK_BACKEND=celery
+    - CELERY_BROKER_URL=redis://redis:6379/0
+    - CELERY_RESULT_BACKEND=redis://redis:6379/1
+
 services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: geracao-video-ia:0.1.0
-    container_name: geracao-video-ia-api
+  redis:
+    image: redis:7-alpine
+    container_name: geracao-video-ia-redis
     restart: unless-stopped
+    # Persiste a fila entre restarts: um `docker compose down/up` não perde jobs
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    <<: *app
+    container_name: geracao-video-ia-api
+    depends_on:
+      redis:
+        condition: service_healthy
 
     # ─── Portas ─────────────────────────────────────────────────────────────────
     ports:
       - "8000:8000"
-
-    # ─── Volumes (persistência de outputs, modelos e cache HF) ──────────────────
-    volumes:
-      # outputs/ do container → outputs/ da máquina host
-      - ./outputs:/app/outputs
-      # Banco SQLite persistido no host (DATABASE_URL=sqlite:////app/data/app.db)
-      - ./data:/app/data
-      # Peso de modelos / cache HF → máquina host (pré-fetch via `make prefetch`)
-      - ./models:/app/models
-      # Cache antigo do HuggingFace (legado; HF_HOME agora aponta para /models)
-      - ./.cache/huggingface:/app/.cache/huggingface
-
-    # ─── Variáveis de ambiente ──────────────────────────────────────────────────
-    environment:
-      - APP_ENV=production
-      - DATABASE_URL=sqlite:////app/data/app.db
-      # Cache HF dentro do volume ./models (downloads persistidos no host)
-      - HF_HOME=/app/models
 
     # ─── Healthcheck (para `docker compose up --wait`) ──────────────────────────
     healthcheck:
@@ -42,3 +62,23 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+
+  worker:
+    <<: *app
+    container_name: geracao-video-ia-worker
+    # Só sobe depois que a API e o broker estiverem prontos
+    depends_on:
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_started
+    environment: *app-env
+    # Processa a fila `video.process_job`; reinicia o processo a cada 50 tasks
+    # para não acumular VRAM entre execuções de modelos pesados.
+    # `--concurrency=1`: geração de vídeo é limitada por VRAM (uma GPU).
+    command: >
+      celery -A src.core.celery_app worker
+      --loglevel=info
+      --concurrency=1
+      --max-tasks-per-child=50
+

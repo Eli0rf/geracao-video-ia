@@ -1,4 +1,4 @@
-.PHONY: install dev test lint typecheck ci clean run help prefetch
+.PHONY: install dev test lint typecheck ci clean run help prefetch worker redis-up redis-down
 
 PYTHON := python3.13
 VENV := .venv
@@ -7,6 +7,7 @@ PYTEST := $(VENV)/bin/pytest
 RUFF := $(VENV)/bin/ruff
 MYPY := $(VENV)/bin/mypy
 UVICORN := $(VENV)/bin/uvicorn
+CELERY := $(VENV)/bin/celery
 
 ## help: Mostra esta ajuda
 help:
@@ -32,6 +33,21 @@ prefetch:
 ## run: Roda a API em modo desenvolvimento com hot-reload
 run:
 	$(UVICORN) src.api.main:app --reload --host 0.0.0.0 --port 8000
+
+## worker: Sobe o worker Celery que processa a fila (E12 / ADR-009)
+worker:
+	@echo "👷 Iniciando worker Celery (Redis em $$CELERY_BROKER_URL)..."
+	$(CELERY) -A src.core.celery_app worker --loglevel=info --concurrency=1
+
+## redis-up: Sobe apenas o broker Redis (necessário para `make worker` e TASK_BACKEND=celery)
+redis-up:
+	@echo "📦 Subindo Redis..."
+	docker compose up -d redis
+
+## redis-down: Para o broker Redis
+redis-down:
+	@echo "🛑 Parando Redis..."
+	docker compose stop redis
 
 ## test: Roda todos os testes com cobertura
 test:
@@ -103,10 +119,10 @@ docker-down:
 	@echo "🛑 Parando stack..."
 	docker compose down
 
-## docker-logs: Acompanhe os logs do container API
+## docker-logs: Acompanhe os logs dos containers (api + worker + redis)
 docker-logs:
-	@echo "📋 Logs do container API (Ctrl+C para parar)"
-	docker compose logs -f api
+	@echo "📋 Logs da stack (Ctrl+C para parar)"
+	docker compose logs -f api worker redis
 
 ## docker-clean: Remove container, imagem e volumes (cuidado!)
 docker-clean:

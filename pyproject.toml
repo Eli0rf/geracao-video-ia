@@ -16,6 +16,10 @@ dependencies = [
     "uvicorn[standard]==0.32.1",
     "python-multipart==0.0.18",
 
+    # Fila de tarefas (Celery + Redis) — E12 / ADR-009
+    "celery==5.6.3",
+    "redis==8.1.0",
+
     # Banco de dados
     "sqlmodel==0.0.22",
     "alembic==1.14.0",
