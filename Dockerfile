@@ -5,7 +5,7 @@
 # ╚══════════════════════════════════════════════════════════════╝
 
 # ─── Estágio 1: dependências Python + sistema ───────────────────────
-FROM python:3.11-slim AS deps
+FROM python:3.13-slim AS deps
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -27,7 +27,7 @@ RUN pip install --no-cache-dir -U pip \
     && pip install --no-cache-dir -e ".[dev]"
 
 # ─── Estágio 2: runtime (serviço prod) ────────────────────
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -47,7 +47,7 @@ WORKDIR /app
 COPY --from=deps /usr/local /usr/local
 COPY --from=deps /app /app
 
-RUN mkdir -p /app/outputs/videos /app/outputs/thumbnails /app/outputs/temp
+RUN mkdir -p /app/outputs/videos /app/outputs/thumbnails /app/outputs/temp /app/data
 
 VOLUME ["/app/outputs"]
 

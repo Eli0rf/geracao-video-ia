@@ -24,7 +24,7 @@ class FakeVideoGenerator:
     """
     `VideoGenerator` falso que gera um MP4 real via lavfi (tela preta).
 
-    Usa o `ffmpeg` do contêiner (disponível na imagem `python:3.11-slim`).
+    Usa o `ffmpeg` do contêiner (disponível na imagem `python:3.13-slim`).
     Nada de placeholder de 1 byte. O arquivo gerado é uma tela preta codificada
     com libx264 e yuv420p, compatível com o VideoAssembler.
     """

@@ -41,7 +41,7 @@ def http(method: str, path: str, payload: dict | None = None) -> tuple[dict, int
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
             raw = response.read().decode("utf-8")
-            return json.loads(raw), response.status
+            return response.status, json.loads(raw)
     except urllib.error.HTTPError as exc:
         msg = exc.read().decode("utf-8", "replace")
         raise RuntimeError(f"HTTP {exc.code} em {path}: {msg}") from exc

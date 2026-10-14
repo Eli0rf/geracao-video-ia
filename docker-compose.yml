@@ -21,6 +21,8 @@ services:
     volumes:
       # outputs/ do container → outputs/ da máquina host
       - ./outputs:/app/outputs
+      # Banco SQLite persistido no host (DATABASE_URL=sqlite:////app/data/app.db)
+      - ./data:/app/data
       # Peso de modelos (se carregados localmente) → máquina host
       - ./models:/app/models
       # Cache do HuggingFace → máquina host (evita redownload)
