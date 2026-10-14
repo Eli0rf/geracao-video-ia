@@ -10,7 +10,7 @@ GET    /api/v1/jobs/{id}/download → download do vídeo gerado
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlmodel import Session
@@ -118,6 +118,7 @@ async def post_job(
     session: SessionDep,
     background_tasks: BackgroundTasks,
     processor: ProcessorDep,
+    request: Request,
 ) -> JobResponse:
     """Cria um novo job (pending) e agenda o processamento em background (202)."""
     job = create_video_job(
@@ -128,7 +129,13 @@ async def post_job(
         width=body.width,
         height=body.height,
     )
-    BackgroundTasksDispatcher(background_tasks, processor).dispatch(job.id)
+    # Rastreabilidade (E07): middleware grava em request.state; fallback ao header.
+    correlation_id = getattr(request.state, "correlation_id", None) or request.headers.get(
+        "X-Correlation-ID"
+    )
+    BackgroundTasksDispatcher(background_tasks, processor).dispatch(
+        job.id, correlation_id=correlation_id
+    )
     return JobResponse.from_job(job)
 
 

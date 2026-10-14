@@ -10,10 +10,12 @@ Cria e configura a instância da aplicação:
 """
 
 import time
+import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import structlog.contextvars
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -23,6 +25,7 @@ from src.api.deps import get_engine
 from src.api.error_handlers import http_exception_handler, validation_exception_handler
 from src.api.logging_config import configure_logging, get_logger
 from src.api.schemas import HealthResponse
+from src.api.v1.metrics import router as metrics_router
 from src.api.v1.router import router as v1_router
 from src.config import get_settings
 from src.core.worker import recover_stale_jobs
@@ -76,13 +79,23 @@ def create_app() -> FastAPI:
     )
 
     # ── Routers ───────────────────────────────────────────────────────────────
+    # /metrics na raiz (convenção Prometheus) — o mesmo router também é
+    # montado em /api/v1/metrics via v1_router.
+    application.include_router(metrics_router)
     application.include_router(v1_router)
 
-    # ── Middleware de logging de requests ─────────────────────────────────────
+    # ── Middleware de logging + correlation id de rastreabilidade (E07) ───────
     @application.middleware("http")
     async def log_requests(request: Request, call_next):  # type: ignore[no-untyped-def]
+        # Usa o X-Correlation-ID do cliente ou gera um novo (uuid hex).
+        correlation_id = request.headers.get("X-Correlation-ID") or uuid.uuid4().hex
+        request.state.correlation_id = correlation_id
+        structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
         start = time.perf_counter()
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        finally:
+            structlog.contextvars.unbind_contextvars("correlation_id")
         duration_ms = round((time.perf_counter() - start) * 1000, 2)
         logger.info(
             "request",
@@ -90,7 +103,9 @@ def create_app() -> FastAPI:
             path=request.url.path,
             status_code=response.status_code,
             duration_ms=duration_ms,
+            correlation_id=correlation_id,
         )
+        response.headers["X-Correlation-ID"] = correlation_id
         return response
 
     # ── Healthcheck ───────────────────────────────────────────────────────────

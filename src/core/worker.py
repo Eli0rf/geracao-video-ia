@@ -16,8 +16,10 @@ Vide ADR-008.
 
 import asyncio
 import time
+from typing import Any
 
 import structlog
+import structlog.contextvars
 from sqlalchemy import Engine
 from sqlmodel import Session, select
 
@@ -60,31 +62,39 @@ class JobProcessor:
         )
         self._semaphore = asyncio.Semaphore(self._max_concurrent)
 
-    async def process(self, job_id: str) -> None:
+    async def process(self, job_id: str, correlation_id: str | None = None) -> None:
         """
         Processa um job de ponta a ponta (thread + timeout + semáforo).
 
         Idempotente: jobs que não estão mais `pending` são ignorados.
+
+        Vincula `job_id` (+ `correlation_id` quando fornecido) aos contextvars
+        do structlog: os logs do pipeline dentro da thread (`asyncio.to_thread`
+        copia o contexto) herdam o rastreamento de ponta a ponta (E07).
         """
         start = time.perf_counter()
-        async with self._semaphore:
-            try:
-                await asyncio.wait_for(
-                    asyncio.to_thread(self._process_sync, job_id),
-                    timeout=self._timeout,
-                )
-            except TimeoutError as exc:
-                self._mark_failed(
-                    job_id, f"Timeout após {self._timeout}s de processamento."
-                )
-                logger.warning("job_timeout", job_id=job_id, error=str(exc))
-            except GenerationError as exc:
-                # _process_sync já trata a maior parte; esta é uma rede de segurança.
-                self._mark_failed(job_id, str(exc))
-                logger.warning("job_generation_error", job_id=job_id, error=str(exc))
-            finally:
-                duration_ms = round((time.perf_counter() - start) * 1000, 2)
-                logger.info("job_processed", job_id=job_id, duration_ms=duration_ms)
+        bound: dict[str, Any] = {"job_id": job_id}
+        if correlation_id is not None:
+            bound["correlation_id"] = correlation_id
+        with structlog.contextvars.bound_contextvars(**bound):
+            async with self._semaphore:
+                try:
+                    await asyncio.wait_for(
+                        asyncio.to_thread(self._process_sync, job_id),
+                        timeout=self._timeout,
+                    )
+                except TimeoutError as exc:
+                    self._mark_failed(
+                        job_id, f"Timeout após {self._timeout}s de processamento."
+                    )
+                    logger.warning("job_timeout", job_id=job_id, error=str(exc))
+                except GenerationError as exc:
+                    # _process_sync já trata a maior parte; esta é uma rede de segurança.
+                    self._mark_failed(job_id, str(exc))
+                    logger.warning("job_generation_error", job_id=job_id, error=str(exc))
+                finally:
+                    duration_ms = round((time.perf_counter() - start) * 1000, 2)
+                    logger.info("job_processed", job_id=job_id, duration_ms=duration_ms)
 
     def _process_sync(self, job_id: str) -> None:
         """Executa o pipeline em thread, abrindo a própria sessão do banco."""

@@ -12,6 +12,22 @@ import structlog
 from src.config import get_settings
 
 
+class _CorrelationIdFilter(logging.Filter):
+    """
+    Injeta o `correlation_id` ativo (structlog contextvars) em todo LogRecord
+    nativo do Python, para que logs de terceiros (uvicorn, SQLAlchemy) também
+    carreguem o ID de rastreabilidade (E07).
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        try:
+            value = structlog.contextvars.get_contextvars().get("correlation_id")
+        except Exception:  # pragma: no cover - contextvars sempre disponível
+            value = None
+        record.correlation_id = str(value) if value else "-"
+        return True
+
+
 def configure_logging() -> None:
     """
     Configura structlog + logging padrão do Python.
@@ -24,11 +40,14 @@ def configure_logging() -> None:
     log_level = settings.log_level
 
     # Configura o logging padrão do Python (captura logs de bibliotecas terceiras)
+    fmt = "%(message)s" if is_dev else "%(correlation_id)s %(message)s"
     logging.basicConfig(
-        format="%(message)s",
+        format=fmt,
         stream=sys.stdout,
         level=getattr(logging, log_level, logging.INFO),
     )
+    for handler in logging.getLogger().handlers:
+        handler.addFilter(_CorrelationIdFilter())
 
     # Processors comuns a todos os ambientes
     shared_processors: list[structlog.types.Processor] = [

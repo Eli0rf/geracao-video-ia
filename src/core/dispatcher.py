@@ -18,8 +18,15 @@ from src.core.worker import JobProcessor
 class JobDispatcher(Protocol):
     """Abstração de despacho: enfileira um `job_id` para processamento."""
 
-    def dispatch(self, job_id: str) -> None:
-        """Agenda o processamento do job `job_id` em background."""
+    def dispatch(self, job_id: str, correlation_id: str | None = None) -> None:
+        """
+        Agenda o processamento do job `job_id` em background.
+
+        Args:
+            job_id: Identificador do job.
+            correlation_id: ID de rastreabilidade repassado ao processor
+                (opcional — quando ausente, a assinatura antiga é mantida).
+        """
         ...
 
 
@@ -36,6 +43,17 @@ class BackgroundTasksDispatcher:
         self._tasks = tasks
         self._processor = processor
 
-    def dispatch(self, job_id: str) -> None:
-        """Agenda `processor.process(job_id)` para rodar após a resposta."""
-        self._tasks.add_task(self._processor.process, job_id)
+    def dispatch(self, job_id: str, correlation_id: str | None = None) -> None:
+        """
+        Agenda `processor.process(job_id)` para rodar após a resposta.
+
+        Quando `correlation_id` é fornecido, é repassado como kwarg — sem
+        ele, a chamada permanece `process(job_id)` (compat com implementações
+        que não conhecem o parâmetro, E07).
+        """
+        if correlation_id is None:
+            self._tasks.add_task(self._processor.process, job_id)
+        else:
+            self._tasks.add_task(
+                self._processor.process, job_id, correlation_id=correlation_id
+            )
