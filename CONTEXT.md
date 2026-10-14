@@ -13,18 +13,18 @@
 |---|---|
 | **Fase pipeline** | BUILD v0.1 ✅ → próximo: BUILD v0.2 |
 | **Milestone ativa** | v0.2 — Core (Integração com IA) |
-| **Última atualização** | 2026-10-14 (E07 Observabilidade: correlation ID, duração por estágio, OOM, GET /metrics, prefetch) |
-| **Branch ativa** | `feature/e07-observability` |
+| **Última atualização** | 2026-10-14 (E11 LLM-as-a-Judge: auditor + auto-correção; E03/E04/E07 consolidados na develop) |
+| **Branch ativa** | `feature/e11-llm-judge` |
 | **Versão** | 0.1.0-alpha |
 
 ---
 
 ## Próxima Task a Executar
 
-**Consolidar os ramos E03/E04/E07 em PR para `develop`**; depois retomar pendências (TASK-010 — ver nota TASK-019/020).
+**Merge de `feature/e11-llm-judge` → `develop` (PR)** e depois PR `develop`→`main` para release. E03/E04/E07 já consolidados na develop (`414139d`, merge FF validado com 250 passed / 93,6%).
 
-> ✅ **TASK-012 Wan2.1 concluída:** `WanVideoGenerator` (`WanPipeline` T2V, diffusers>=0.33) + `src/core/devices.py` + roteamento `wan2.1` na factory; 10 testes mockados; suite 217 passed, 2 skipped, cobertura 93%, mypy 0, ruff ok.
 > ✅ **Bloco 9 / E07 Observabilidade concluído (TASK-014):** correlation ID do middleware ao worker (structlog contextvars + `X-Correlation-ID`), `duration_ms` por estágio do pipeline, captura de OOM/falhas com stack trace nos geradores, `GET /metrics` (Prometheus, SQL `GROUP BY`), `scripts/prefetch_models.py` + `make prefetch` + `HF_HOME=/app/models`. Fix: AnimateDiff agora carrega MotionAdapter + base SD. Suite **250 passed, 2 skipped, cobertura 94%**, mypy 0, ruff ok.
+> ✅ **Bloco 10 / E11 Anti-Alucinação concluído (TASK-022):** `OllamaScriptGenerator` com LLM-as-a-Judge — auditor valida fidelidade do roteiro ao prompt; loop de auto-correção (máx. 3) injetando o `reason`; **fail-closed** (JSON inválido do juiz = reprovação + reason padrão + warning); `ScriptValidationError` falha o job antes de renderizar. 10 testes novos (MockTransport: 1ª aprovação, correção na 2ª, falha máxima, fail-closed, payload do juiz, herança de `correlation_id`). Suite **260 passed, 2 skipped, cobertura 93,74%**, mypy 0, ruff ok.
 > ✅ **TASK-013 E2E validada em 2026-10-14:** `docker compose up -d --build` + `python scripts/run_e2e.py` → job `completed`, `.mp4` real (3420 bytes, `ftypisom`) em `outputs/videos/`.
 
 ---
@@ -54,6 +54,7 @@
 | TASK-019 VideoPipeline | ✅ Concluída | PR-4 (Bloco 4) |
 | TASK-020 BackgroundDispatcher | ✅ Concluída | PR-4 (Bloco 4) |
 | TASK-021 Frontend pixel art | ✅ Concluída | PR-5 (Bloco 5) |
+| TASK-022 Auditoria LLM (E11) | ✅ Concluída | E11 (branch feature/e11-llm-judge) |
 
 ---
 

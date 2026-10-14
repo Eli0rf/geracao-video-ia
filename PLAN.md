@@ -600,6 +600,22 @@ Testes que cobrem o fluxo completo: submeter job → checar status → baixar v�
 
 ---
 
+### ÉPICO E11 — Anti-Alucinação (LLM-as-a-Judge)
+
+#### TASK-022 — Auditoria semântica de roteiro
+
+**Estimativa:** 3h  
+**Branch:** `feature/e11-llm-judge`
+
+**Critérios de aceitação:**
+- [x] Após gerar o roteiro JSON, um juiz LLM valida a fidelidade ao prompt do usuário (veredito `{approved, reason}`)
+- [x] Loop de auto-correção (máx. 3 tentativas) injetando o `reason` no prompt da nova geração
+- [x] Fail-closed: JSON inválido/inparseável do juiz = reprovação com reason padrão + warning `script_judge_unparseable`
+- [x] `ScriptValidationError` derruba o job no estágio de roteiro, antes de renderizar vídeo
+- [x] Logs das tentativas herdam `correlation_id` via structlog contextvars (E07); cobertura > 90%, ruff/mypy 0
+
+---
+
 ## v1.0 — Produção
 
 ### ÉPICO E08 — Containerização
@@ -632,6 +648,7 @@ Testes que cobrem o fluxo completo: submeter job → checar status → baixar v�
 | E05-core-engine | TASK-018~020 | `feature/e05-core-engine` | 9h | ✅ |
 | E06-e2e-tests | TASK-013 | `feature/e06-e2e-tests` | 2h | ◻ Pendente |
 | E07-observability | TASK-014 | `feature/e07-observability` | 2h | ✅ |
+| E11-llm-judge | TASK-022 | `feature/e11-llm-judge` | 3h | ✅ |
 | E08-docker | TASK-015 | `feature/e08-docker` | 2h | ◻ Pendente |
 | E09-frontend | TASK-021 | `feature/e09-frontend` | 2h | 🟨 Em progresso |
 
